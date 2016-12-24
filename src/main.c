@@ -1,7 +1,8 @@
 #include "fs_manager.h"
 
 
-int main(void) {
+void main(void) {
     test_fs_manager();
-    return 0;
+    
+    while(1) {};
 }

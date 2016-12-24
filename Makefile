@@ -1,4 +1,4 @@
-TARGET:=FreeRTOS
+MakefileTARGET:=FreeRTOS
 # TODO change to your ARM gcc toolchain path
 TOOLCHAIN_ROOT:=~/gcc-arm-none-eabi
 #TOOLCHAIN_PATH:=$(TOOLCHAIN_ROOT)/bin
@@ -54,13 +54,13 @@ SRC+=fs_manager.c
 SRC+=diskio.c
 SRC+=ff.c
 SRC+=ff_spi.c
+SRC+=syscall.c
+SRC+=unicode.c
 # SRC+=cc932.c
 # SRC+=cc936.c
 # SRC+=cc949.c
 # SRC+=cc950.c
 # SRC+=ccsbcs.c
-SRC+=syscall.c
-SRC+=unicode.c
 
 # FreeRTOS Source Files 
 # Uncomment to enable
