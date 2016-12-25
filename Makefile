@@ -49,6 +49,7 @@ SRC+=syscalls.c
 
 SRC+=main.c
 SRC+=fs_manager.c
+SRC+=uart_manager.c
 
 # FatFS Files
 SRC+=diskio.c
