@@ -1,7 +1,7 @@
 #include "uart_manager.h"
 
 
-void init_USART(){
+void init_UART(){
     uint32_t baudrate = 9600;
 	GPIO_InitTypeDef GPIO_InitStruct; // this is for the GPIO pins used as TX and RX
 	USART_InitTypeDef USART_InitStruct; // this is for the USART1 initilization
@@ -28,24 +28,24 @@ void init_USART(){
 	// finally this enables the complete USART1 peripheral
 	USART_Cmd(USART1, ENABLE);
     
-    print_USART("\n");
+    print_UART("\n");
 }
 
-void print_USART(char *s) {
-    USART_puts(USART1, s);
+void print_UART(char *s) {
+    UART_puts(USART1, s);
 }
 
 
-void USART_putc(USART_TypeDef* USARTx, unsigned char c){
+void UART_putc(USART_TypeDef* USARTx, unsigned char c){
     // wait until data register is empty
     while( !(USARTx->SR & 0x00000040) ); 
     USART_SendData(USARTx, c);
 }
 
 
-void USART_puts(USART_TypeDef* USARTx, volatile char *s){
+void UART_puts(USART_TypeDef* USARTx, volatile char *s){
 	while(*s){
-		USART_putc(USARTx, *s);
+		UART_putc(USARTx, *s);
 		s++;
 	}
 }

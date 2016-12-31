@@ -1,7 +1,7 @@
 #include <stm32f4xx.h>
 
-void init_USART();
+void init_UART();
 
-void print_USART(char * s);
+void print_UART(char * s);
 
-void USART_puts(USART_TypeDef* USARTx, volatile char *s);
+void UART_puts(USART_TypeDef* USARTx, volatile char *s);
