@@ -1,5 +1,6 @@
 #include <stm32f4xx.h>
 #include "uart_manager.h"
+#include "fs_manager.h"
 
 #define   OUT_FREQ          2500                                 // Output waveform frequency
 #define   SINE_RES          128                                  // Waveform resolution
@@ -22,6 +23,7 @@ const uint16_t function[SINE_RES] = { 2048, 2145, 2242, 2339, 2435, 2530, 2624, 
                                       1378, 1471, 1565, 1660, 1756, 1853, 1950, 2047 };    
 
 
+void test_dac_manager1(void);
 void test_dac_manager(void);
 
 static void TIM6_Config(void);

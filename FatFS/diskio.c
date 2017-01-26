@@ -60,7 +60,7 @@ uint8_t sdc_getResponse(uint8_t response)
 	for(uint8_t n = 0; n < 8; n++)
 	{
         unsigned char vv = SPI_receive_single(SPI1);
-        print_UART(&vv);
+    //    print_UART(&vv);
 		if (vv == response)
 		{
 			return 0;

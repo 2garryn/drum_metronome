@@ -10,10 +10,10 @@ void main(void) {
 //Enable HSE clock
     RCC_HSEConfig(RCC_HSE_ON);
 //Wait for clock to stabilize
-    while (!RCC_WaitForHSEStartUp());
+     while (!RCC_WaitForHSEStartUp());
     init_UART();
     print_UART("TEST 1111 TEST 2222\n");
-    test_fs_manager();
+//    test_fs_manager();
     test_dac_manager();
     
     
