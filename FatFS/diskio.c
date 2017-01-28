@@ -60,7 +60,6 @@ uint8_t sdc_getResponse(uint8_t response)
 	for(uint8_t n = 0; n < 8; n++)
 	{
         unsigned char vv = SPI_receive_single(SPI1);
-    //    print_UART(&vv);
 		if (vv == response)
 		{
 			return 0;
@@ -98,33 +97,26 @@ DSTATUS disk_initialize (
 	GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 	SPI_init(SPI1, SPI_BaudRatePrescaler_256);
-    print_UART("SPI inited\n");
 	// check wether SDC is inserted into socket
 	if (!sdc_isConn())
 	{
 		return STA_NODISK;
 	}
-	print_UART("SDC inserted into socket\n");
 	// send 10 dummy bytes to wake up SDC
 	for (uint8_t i = 0; i < 10; i++)
 	{
 		SPI_send_single(SPI1, 0xFF);
 	}
-    print_UART("SDC Waken Up\n");
 	// assert SDC
 	sdc_assert();
-    print_UART("SDC asserted\n");
 	// software reset the SDC
 	sdc_sendCommand(SDC_GO_IDLE_STATE, 0, 0, 0, 0);
-    print_UART("SDC send SDC_GO_IDLE_STATE\n");
 	if (sdc_getResponse(0x01))
 	{
 		return STA_NOINIT;
 	}
-	print_UART("SDC send SDC_GO_IDLE_STATE response received\n");
 	// wait for SDC to come out of idle state
 	uint8_t resp = 1;
-    print_UART("SDC send SDC_SEND_OP_COND \n");
 	while(resp)
 	{
 		sdc_sendCommand(SDC_SEND_OP_COND, 0, 0, 0, 0);
@@ -133,7 +125,6 @@ DSTATUS disk_initialize (
 			resp = 0;
 		}
 	}
-    print_UART("SDC send SDC_SEND_OP_COND response received\n");
 	// deassert the SDC
 	sdc_deassert();
 
