@@ -62,7 +62,7 @@ void int_to_str( uint8_t word, char * str ) {
 }
 
 void LOGD(char * text, uint8_t code) {
-	LOG("DEBUG", text, code);
+//	LOG("DEBUG", text, code);
 }
 
 void LOGE(char * text, uint8_t code) {
