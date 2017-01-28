@@ -35,17 +35,52 @@ void print_UART(char *s) {
     UART_puts(USART1, s);
 }
 
-
 void UART_putc(USART_TypeDef* USARTx, unsigned char c){
     // wait until data register is empty
     while( !(USARTx->SR & 0x00000040) ); 
     USART_SendData(USARTx, c);
 }
 
-
 void UART_puts(USART_TypeDef* USARTx, volatile char *s){
 	while(*s){
 		UART_putc(USARTx, *s);
 		s++;
 	}
+}
+
+#define STRING_LENGTH 6
+void int_to_str( uint8_t word, char * str ) {
+  str[STRING_LENGTH - 1] = 0;
+  int8_t i;
+  for(i = STRING_LENGTH - 2; i >= 0; i--) {
+	  str[i] = 48;
+  }
+  for (i = STRING_LENGTH - 2; i >= 0; i--) {
+    str[i] = (word % 10) + 48;
+    word /= 10;
+  };
+}
+
+void LOGD(char * text, uint8_t code) {
+	LOG("DEBUG", text, code);
+}
+
+void LOGE(char * text, uint8_t code) {
+	LOG("ERROR", text, code);
+}
+
+void LOGI(char * text, uint8_t code) {
+	LOG("INFO", text, code);
+}
+
+void LOG(char * log_level, char * text, uint8_t code) {
+	char str[STRING_LENGTH];
+	int_to_str(code, str);
+	print_UART(log_level);
+	print_UART(": ");
+	print_UART(text);
+	print_UART(" - Code: ");
+	print_UART(str);
+	print_UART("\n");
+	
 }
