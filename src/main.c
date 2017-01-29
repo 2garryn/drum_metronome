@@ -20,6 +20,7 @@ int main(void) {
  //   test_dac_manager();
     clt_init();
     clt_tim_enable();
+    clt_ms_trigger_set(10);
     
     
     
@@ -27,13 +28,13 @@ int main(void) {
     inisialisasi();
     uint8_t light = 0;
     while(1) {
-        if(clt_flag_is_set() && !light) {
-            clt_flag_reset();
+        if(clt_ms_trigger_is_set() && !light) {
+            clt_ms_trigger_clear();
             LED_BLUE_ON;
             light = 1;
         }
-        if(clt_flag_is_set() && light) {
-            clt_flag_reset();
+        if(clt_ms_trigger_is_set()  && light) {
+            clt_ms_trigger_clear();
             LED_BLUE_OFF;
             light = 0;
         }

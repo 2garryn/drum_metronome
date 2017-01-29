@@ -1,6 +1,10 @@
 #include "clock_timer.h"
 
 uint8_t clt_click_flag = 0;
+uint16_t clt_ms_trigger = -1;
+uint16_t clt_ms_counter = 0;
+uint16_t clt_ms_counter_flag = 0;
+
 
 void clt_init(void) {
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
@@ -34,6 +38,21 @@ void clt_tim_disable(void) {
     NVIC_DisableIRQ(TIM2_IRQn);
 }
 
+void clt_ms_trigger_set(uint16_t ms) {
+    clt_ms_trigger = ms;
+    clt_ms_counter = 0;
+}
+
+uint8_t clt_ms_trigger_is_set(void) {
+ //   LOGI("Checking ms trigger", clt_ms_counter);ьшm
+    return clt_ms_counter_flag;
+}
+
+void clt_ms_trigger_clear(void) {
+    clt_ms_counter_flag = 0;
+    clt_ms_counter = 0;
+}
+
 uint8_t clt_flag_is_set(void) {
     return clt_click_flag;
 }
@@ -45,7 +64,12 @@ void clt_flag_reset(void) {
 void TIM2_IRQHandler(void) {
   TIM2->SR &= ~TIM_SR_UIF; //Сбрасываем флаг UIF
   clt_click_flag = 1;
-
+  if(clt_ms_trigger != -1){
+    clt_ms_counter++;
+    if(clt_ms_counter == clt_ms_trigger) {
+      clt_ms_counter_flag = 1;
+    }
+  }
 }
 
 
