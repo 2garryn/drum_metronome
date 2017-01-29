@@ -1,6 +1,7 @@
 #include "fs_manager.h"
 #include "uart_manager.h"
 #include "dac_manager.h"
+#include "clock_timer.h"
 
 #include "stm32f4xx.h"       // file header basic system STM32F4
 
@@ -15,18 +16,28 @@ int main(void) {
      while (!RCC_WaitForHSEStartUp());
     init_UART();
     print_UART("TEST 1111 TEST 2222\n");
-    test_fsm();
+  //  test_fsm();
  //   test_dac_manager();
+    clt_init();
+    clt_tim_enable();
     
     
     
     
     inisialisasi();
+    uint8_t light = 0;
     while(1) {
-        LED_BLUE_ON;
-        delay111(100000);
-        LED_BLUE_OFF;
-        delay111(300000);
+        if(clt_flag_is_set() && !light) {
+            clt_flag_reset();
+            LED_BLUE_ON;
+            light = 1;
+        }
+        if(clt_flag_is_set() && light) {
+            clt_flag_reset();
+            LED_BLUE_OFF;
+            light = 0;
+        }
+
     };
     return 0;
     
