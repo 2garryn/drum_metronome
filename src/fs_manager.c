@@ -5,7 +5,7 @@ void test_fsm(void){
 	fsm_sample sample;
 	char nname[10];
 	char db[10];
-	char ws[10];
+	char ob[10];
 
 	fsm_init();
 	fsm_samples_iter_init(&iter);
@@ -18,12 +18,13 @@ void test_fsm(void){
 		}
 	}
 	fsm_open_sample("HIHAT", &sample);
-	f_gets(ws, 10, &(sample.weakshare_fil));
+	f_gets(ob, 10, &(sample.offbeat_fil));
 	f_gets(db, 10, &(sample.downbeat_fil));
 	LOGI("Downbeat ->", 0);
 	LOGI(db, 0);
-	LOGI("Weakshare ->", 0);
-	LOGI(ws, 0);
+	LOGI("Offbeat ->", 0);
+	LOGI(ob, 0);
+
 	fsm_close_sample(&sample);
 }
 
@@ -45,7 +46,7 @@ uint8_t fsm_init(void) {
 };
 
 
-uint8_t fsm_samples_iter_init(fsm_sample_iter * iter) {
+void fsm_samples_iter_init(fsm_sample_iter * iter) {
 	iter->stop = FALSE;
 	iter->inited = FALSE;
 }
@@ -54,7 +55,6 @@ uint8_t fsm_samples_iter_continue(fsm_sample_iter * iter, char * name) {
 	LOGD("fsm_samples_iter_continue", 0);
 	FRESULT res;
 	FILINFO fno;
-	DIR dir;
 	if(iter->inited == FALSE) {
 		res = f_opendir(&(iter->dir), "/samples"); 
 		if(res != FR_OK) {
@@ -78,7 +78,7 @@ uint8_t fsm_samples_iter_continue(fsm_sample_iter * iter, char * name) {
 		strcpy(name, fno.fname);
 		return RET_OK;
 	}
-
+	return RET_NODIR;
 }
 
 uint8_t fsm_open_sample(char * sample_name, fsm_sample * sample) {
@@ -90,7 +90,7 @@ uint8_t fsm_open_sample(char * sample_name, fsm_sample * sample) {
 
 uint8_t fsm_close_sample(fsm_sample * sample) {
 	LOGD("fsm_close_sample", 0);
-	close_sample_files(sample);
+	return close_sample_files(sample);
 }
 
 
@@ -98,7 +98,7 @@ uint8_t open_sample_files(fsm_sample * sample) {
 	LOGD("open_sample_files", 0);
 
 	char downbeat_path[40];
-	char weakshare_path[40];
+	char offbeat_path[40];
 
 	FRESULT res;
 
@@ -106,10 +106,10 @@ uint8_t open_sample_files(fsm_sample * sample) {
 	strcat(downbeat_path, sample->name);
 	strcat(downbeat_path, "/downbeat.wav");
 
-	strcpy(weakshare_path, "/samples/");
-	strcat(weakshare_path, sample->name);
-	strcat(weakshare_path, "/weaksh.wav");
-	LOGD(weakshare_path, 13);
+	strcpy(offbeat_path, "/samples/");
+	strcat(offbeat_path, sample->name);
+	strcat(offbeat_path, "/offbeat.wav");
+	LOGD(offbeat_path, 13);
 	LOGD(downbeat_path, 14);
 
 	res = f_open(&(sample->downbeat_fil), downbeat_path, FA_OPEN_EXISTING | FA_READ); 
@@ -118,10 +118,10 @@ uint8_t open_sample_files(fsm_sample * sample) {
 		LOGE(downbeat_path, 0);
 		return RET_ERROR;
 	}
-	res = f_open(&(sample->weakshare_fil), weakshare_path, FA_OPEN_EXISTING | FA_READ); 
+	res = f_open(&(sample->offbeat_fil), offbeat_path, FA_OPEN_EXISTING | FA_READ); 
 	if (res){
-		LOGE("Weakshare open failed", res);
-		LOGE(weakshare_path, 0);
+		LOGE("Offbeat open failed", res);
+		LOGE(offbeat_path, 0);
 		return RET_ERROR;
 	}
 	return RET_OK;
@@ -130,6 +130,6 @@ uint8_t open_sample_files(fsm_sample * sample) {
 uint8_t close_sample_files(fsm_sample *sample) {
 	LOGD("close_sample_files", 0);
 	f_close(&(sample->downbeat_fil));
-	f_close(&(sample->weakshare_fil));
+	f_close(&(sample->offbeat_fil));
 	return RET_OK;
 }

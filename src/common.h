@@ -5,6 +5,8 @@
 
 #define RET_NOTFOUND 2
 
+#define RET_NODIR 3
+
 typedef int8_t BOOL;
 
 #define TRUE 1
