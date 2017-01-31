@@ -1,23 +1,13 @@
 #include "dac_manager.h"   
 
-uint16_t functionss[SINE_RES] = { 2048, 2145, 2242, 2339, 2435, 2530, 2624, 2717, 2808, 2897, 
-                                      2984, 3069, 3151, 3230, 3307, 3381, 3451, 3518, 3581, 3640, 
-                                      3696, 3748, 3795, 3838, 3877, 3911, 3941, 3966, 3986, 4002, 
-                                      4013, 4019, 4020, 4016, 4008, 3995, 3977, 3954, 3926, 3894, 
-                                      3858, 3817, 3772, 3722, 3669, 3611, 3550, 3485, 3416, 3344, 
-                                      3269, 3191, 3110, 3027, 2941, 2853, 2763, 2671, 2578, 2483, 
-                                      2387, 2291, 2194, 2096, 1999, 1901, 1804, 1708, 1612, 1517, 
-                                      1424, 1332, 1242, 1154, 1068, 985, 904, 826, 751, 679, 
-                                      610, 545, 484, 426, 373, 323, 278, 237, 201, 169, 
-                                      141, 118, 100, 87, 79, 75, 76, 82, 93, 109, 
-                                      129, 154, 184, 218, 257, 300, 347, 399, 455, 514, 
-                                      577, 644, 714, 788, 865, 944, 1026, 1111, 1198, 1287, 
-                                      1378, 1471, 1565, 1660, 1756, 1853, 1950, 2047 };    
                                        
 unsigned char dac_buff[512];
+uint8_t loop_go = FALSE;
+FIL * current_file;
 
 
-void init(void) {
+void dac_init(void) {
+    LOGD("dac_init", 0);
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, ENABLE);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, ENABLE);
@@ -50,40 +40,119 @@ void init(void) {
     DAC_Init(DAC_Channel_1, &DAC_InitStructure);
     
     // Init DMA 
-    
-    
     DMA_DeInit(DMA1_Stream5);
-     DMA_INIT.DMA_Channel            = DMA_Channel_7; 
-     DMA_INIT.DMA_PeripheralBaseAddr = (uint32_t)&DAC->DHR8R1;//->DHR12R1;// &DAC->DHR12L1; DHR8R1;
-     DMA_INIT.DMA_Memory0BaseAddr    = (uint32_t)&dac_buff;
-     DMA_INIT.DMA_DIR                = DMA_DIR_MemoryToPeripheral;
-     DMA_INIT.DMA_BufferSize         = 512;
-     DMA_INIT.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;
-     DMA_INIT.DMA_MemoryInc          = DMA_MemoryInc_Enable;
-     DMA_INIT.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
-     DMA_INIT.DMA_MemoryDataSize     = DMA_MemoryDataSize_Byte;
-     DMA_INIT.DMA_Mode               = DMA_Mode_Circular;
-     DMA_INIT.DMA_Priority           = DMA_Priority_High;
-     DMA_INIT.DMA_FIFOMode           = DMA_FIFOMode_Disable;         
-     DMA_INIT.DMA_FIFOThreshold      = DMA_FIFOThreshold_HalfFull;
-     DMA_INIT.DMA_MemoryBurst        = DMA_MemoryBurst_Single;
-     DMA_INIT.DMA_PeripheralBurst    = DMA_PeripheralBurst_Single;
-     DMA_Init(DMA1_Stream5, &DMA_INIT);
+    DMA_INIT.DMA_Channel            = DMA_Channel_7; 
+    DMA_INIT.DMA_PeripheralBaseAddr = (uint32_t)&DAC->DHR8R1;//->DHR12R1;// &DAC->DHR12L1; DHR8R1;
+    DMA_INIT.DMA_Memory0BaseAddr    = (uint32_t)&dac_buff;
+    DMA_INIT.DMA_DIR                = DMA_DIR_MemoryToPeripheral;
+    DMA_INIT.DMA_BufferSize         = 512;
+    DMA_INIT.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;
+    DMA_INIT.DMA_MemoryInc          = DMA_MemoryInc_Enable;
+    DMA_INIT.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+    DMA_INIT.DMA_MemoryDataSize     = DMA_MemoryDataSize_Byte;
+    DMA_INIT.DMA_Mode               = DMA_Mode_Circular;
+    DMA_INIT.DMA_Priority           = DMA_Priority_High;
+    DMA_INIT.DMA_FIFOMode           = DMA_FIFOMode_Disable;         
+    DMA_INIT.DMA_FIFOThreshold      = DMA_FIFOThreshold_HalfFull;
+    DMA_INIT.DMA_MemoryBurst        = DMA_MemoryBurst_Single;
+    DMA_INIT.DMA_PeripheralBurst    = DMA_PeripheralBurst_Single;
+    DMA_Init(DMA1_Stream5, &DMA_INIT);
+}    
 
-     
 
-     
-     
-     DMA_Cmd(DMA1_Stream5, ENABLE);
-     DAC_Cmd(DAC_Channel_1, ENABLE);
-     DAC_DMACmd(DAC_Channel_1, ENABLE);
-   
-    // TIM_Cmd(TIM6, ENABLE);
-     wave_playback("output.wav");
-     
-     
-}                                      
-        
+void dac_enable(void) {
+    LOGD("dac_enable", 0);
+    DMA_Cmd(DMA1_Stream5, ENABLE);
+    DAC_Cmd(DAC_Channel_1, ENABLE);
+    DAC_DMACmd(DAC_Channel_1, ENABLE);
+}
+
+void dac_disable(void) {
+    LOGD("dac_disable", 0);
+    DAC_DMACmd(DAC_Channel_1, DISABLE);
+    DAC_Cmd(DAC_Channel_1, DISABLE);
+    DMA_Cmd(DMA1_Stream5, DISABLE);
+}
+
+void dac_timer_enable() {
+    loop_go = TRUE;
+    DMA_SetCurrDataCounter(DMA1_Stream5, 0);
+    TIM_Cmd(TIM6, ENABLE);
+}
+
+void dac_timer_disable() {
+    loop_go = FALSE;
+    TIM_Cmd(TIM6, DISABLE);
+}
+
+uint8_t dac_load_file(FIL * fil) {
+    LOGD("dac_play", 0);
+    uint8_t result;
+    current_file = fil;
+    if(fsm_seek_raw_wav(fil)) {          
+        return RET_ERROR;
+    };
+    result = fsm_read_file(fil, &dac_buff[0], 512);
+    if(result == RET_ERROR) {
+        return RET_ERROR;
+    }
+    return RET_OK;
+}
+
+uint8_t dac_loop(void) {
+    uint8_t res = RET_OK;
+    if((DMA1->HISR & DMA_HISR_HTIF5) && loop_go) {
+        res = fsm_read_file(current_file, &dac_buff[0], 256);    //загрузить ее данными
+        DMA1->HIFCR |= DMA_HIFCR_CHTIF5;   
+        if(res == RET_FILE_FINISHED || res == RET_ERROR) {
+            loop_go = FALSE;
+        };
+        return res;
+    }
+    if((DMA1->HISR & DMA_HISR_TCIF5) && loop_go) {
+        res = fsm_read_file(current_file, &dac_buff[256], 256);
+        DMA1->HIFCR |= DMA_HIFCR_CTCIF5;
+        if(res == RET_FILE_FINISHED || res == RET_ERROR) {
+            loop_go = FALSE;
+        } 
+        return res;
+    }
+    return res;
+}
+
+
+void test_dac_manager(void){
+    fsm_sample sample;
+    fsm_init();
+    dac_init();
+    fsm_open_sample("sine", &sample);
+    dac_enable();
+    dac_load_file(&(sample.downbeat_fil));
+    uint8_t res = RET_OK;
+    dac_timer_enable();
+    while(1) {
+        res = dac_loop();
+        if(res == RET_ERROR || res == RET_FILE_FINISHED ) {
+            break;
+        }
+    }
+    dac_timer_disable();
+    dac_load_file(&(sample.offbeat_fil));;
+    res = RET_OK;
+    dac_timer_enable();
+    while(1) {
+        res = dac_loop();
+        if(res == RET_ERROR || res == RET_FILE_FINISHED ) {
+            break;
+        }
+    }
+    dac_timer_disable();
+    dac_disable();
+    fsm_close_sample(&sample);
+
+}
+
+ /*
 int wave_playback(const char *FileName)
 {
   FRESULT res;                                //для возвращаемого функциями результата
@@ -106,6 +175,7 @@ int wave_playback(const char *FileName)
   print_UART( "success!\n");
   print_UART( "Seek position: \"");
   res = f_lseek(&file,0x2c);        //переместить указатель на начало полезных данных
+  current_file = &file;
   if(res) {          
       print_UART("Can not go to file position \n");
       return 2;
@@ -136,16 +206,14 @@ int wave_playback(const char *FileName)
      if(cnt<256)break;                        //если конец файла
   }
  
+ while(1) {
+     dac_loop_do();
+ }
   TIM6->CR1 &= ~TIM_CR1_CEN;                  //остановить преобразование
   f_close(&file);                             //закрыть файл
   return 0;                                   //успешное завершение ф-ии
 }
 
-
-void test_dac_manager(void){
-    init();
-    
-}
 
 
 unsigned char i=0;
@@ -338,3 +406,4 @@ static void DAC1_Config(void) {
   DAC_Cmd(DAC_Channel_1, ENABLE);
   DAC_DMACmd(DAC_Channel_1, ENABLE);
 }
+*/

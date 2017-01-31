@@ -7,6 +7,7 @@ uint16_t clt_ms_counter_flag = 0;
 
 
 void clt_init(void) {
+    LOGD("clt_init", 0);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
     TIM_TimeBaseInitTypeDef TIM2_TimeBase;
     NVIC_InitTypeDef nvicStructure;
@@ -29,16 +30,19 @@ void clt_init(void) {
 }
 
 void clt_tim_enable(void) {
+    LOGD("clt_tim_enable", 0);
     TIM_Cmd(TIM2, ENABLE);
     NVIC_EnableIRQ(TIM2_IRQn);
 }
 
 void clt_tim_disable(void) {
+    LOGD("clt_tim_disable", 0);
     TIM_Cmd(TIM2, DISABLE);
     NVIC_DisableIRQ(TIM2_IRQn);
 }
 
 void clt_ms_trigger_set(uint16_t ms) {
+    LOGD("clt_ms_trigger_set", 0);
     clt_ms_trigger = ms;
     clt_ms_counter = 0;
 }

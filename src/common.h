@@ -7,6 +7,8 @@
 
 #define RET_NODIR 3
 
+#define RET_FILE_FINISHED 4
+
 typedef int8_t BOOL;
 
 #define TRUE 1

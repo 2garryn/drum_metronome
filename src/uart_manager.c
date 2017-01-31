@@ -49,7 +49,7 @@ void UART_puts(USART_TypeDef* USARTx, volatile char *s){
 }
 
 #define STRING_LENGTH 6
-void int_to_str( uint8_t word, char * str ) {
+void int_to_str( uint16_t word, char * str ) {
   str[STRING_LENGTH - 1] = 0;
   int8_t i;
   for(i = STRING_LENGTH - 2; i >= 0; i--) {
@@ -61,19 +61,19 @@ void int_to_str( uint8_t word, char * str ) {
   };
 }
 
-void LOGD(char * text, uint8_t code) {
-//	LOG("DEBUG", text, code);
+void LOGD(char * text, uint16_t code) {
+	LOG("DEBUG", text, code);
 }
 
-void LOGE(char * text, uint8_t code) {
+void LOGE(char * text, uint16_t code) {
 	LOG("ERROR", text, code);
 }
 
-void LOGI(char * text, uint8_t code) {
+void LOGI(char * text, uint16_t code) {
 	LOG("INFO", text, code);
 }
 
-void LOG(char * log_level, char * text, uint8_t code) {
+void LOG(char * log_level, char * text, uint16_t code) {
 	char str[STRING_LENGTH];
 	int_to_str(code, str);
 	print_UART(log_level);

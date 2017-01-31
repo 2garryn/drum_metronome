@@ -27,8 +27,13 @@ void fsm_samples_iter_init(fsm_sample_iter * iter);
 uint8_t fsm_open_sample(char * sample_name, fsm_sample * sample);
 uint8_t fsm_close_sample(fsm_sample * sample);
 
+uint8_t fsm_seek_raw_wav(FIL * fil);
+uint8_t fsm_read_file(FIL * fil, unsigned char * buffer, uint16_t length);
+
 uint8_t open_sample_files(fsm_sample *sample);
 uint8_t close_sample_files(fsm_sample *sample);
+
+
 
 
 void test_fsm(void);

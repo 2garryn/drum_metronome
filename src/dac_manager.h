@@ -4,7 +4,7 @@
 #include <stm32f4xx.h>
 #include "uart_manager.h"
 #include "fs_manager.h"
-
+/*
 #define   OUT_FREQ          2500                                 // Output waveform frequency
 #define   SINE_RES          128                                  // Waveform resolution
 #define   DAC_DHR12R1_ADDR  0x40007408                           // DMA writes into this reg on every request
@@ -18,5 +18,12 @@ void test_dac_manager(void);
 
 static void TIM6_Config(void);
 static void DAC1_Config(void);   
+*/
+
+void dac_init(void);
+void dac_enable(void);
+void dac_disable(void);
+uint8_t dac_load_file(FIL * fil);
+uint8_t dac_loop(void);
 
 #endif /* DACMANAGER_H_INCLUDED */

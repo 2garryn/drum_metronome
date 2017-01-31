@@ -94,6 +94,31 @@ uint8_t fsm_close_sample(fsm_sample * sample) {
 }
 
 
+uint8_t fsm_seek_raw_wav(FIL * fil) {
+	FRESULT res;
+	res = f_lseek(fil, 0x2c); 
+	if(res) {
+		LOGE("Error during go to raw offset", res);
+		return RET_ERROR;
+	}
+	return RET_OK;
+}
+
+FRESULT res1;
+UINT cnt1;
+uint8_t fsm_read_file(FIL * fil, unsigned char * buffer, uint16_t length) {
+
+	res1 = f_read(fil, buffer, length, &cnt1); 
+	if(res1) {
+		LOGE("Read sample file error", res1);
+		return RET_ERROR;
+	}
+	if(cnt1 < length) {
+		return RET_FILE_FINISHED;
+	}
+}
+
+
 uint8_t open_sample_files(fsm_sample * sample) {
 	LOGD("open_sample_files", 0);
 

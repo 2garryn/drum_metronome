@@ -3,7 +3,8 @@
 #include "dac_manager.h"
 #include "clock_timer.h"
 
-#include "stm32f4xx.h"       // file header basic system STM32F4
+#include "stm32f4xx.h"       // file header basic system 
+#include <math.h>
 
 #define LED_BLUE_ON   GPIOD->BSRRL = GPIO_Pin_15;  // led biru on
 #define LED_BLUE_OFF  GPIOD->BSRRH = GPIO_Pin_15;  // led biru off
@@ -17,17 +18,20 @@ int main(void) {
     init_UART();
     print_UART("TEST 1111 TEST 2222\n");
   //  test_fsm();
- //   test_dac_manager();
+    test_dac_manager();
+    
     clt_init();
     clt_tim_enable();
-    clt_ms_trigger_set(10);
+    clt_ms_trigger_set(2000);
     
-    
-    
+    uint16_t result = (uint16_t) lroundf(60000.0f/161);
+    LOGI("division 161", result); 
+ 
     
     inisialisasi();
     uint8_t light = 0;
     while(1) {
+ //       bpl_execute();
         if(clt_ms_trigger_is_set() && !light) {
             clt_ms_trigger_clear();
             LED_BLUE_ON;
