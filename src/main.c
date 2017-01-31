@@ -1,7 +1,9 @@
 #include "fs_manager.h"
 #include "uart_manager.h"
 #include "dac_manager.h"
+#include "fs_manager.h"
 #include "clock_timer.h"
+#include "bar_player.h"
 
 #include "stm32f4xx.h"       // file header basic system 
 #include <math.h>
@@ -14,12 +16,26 @@ int main(void) {
 //Enable HSE clock
     RCC_HSEConfig(RCC_HSE_ON);
 //Wait for clock to stabilize
-     while (!RCC_WaitForHSEStartUp());
+    while (!RCC_WaitForHSEStartUp());
     init_UART();
-    print_UART("TEST 1111 TEST 2222\n");
+    fsm_init();
+    clt_init();
+    dac_init();
+
+    fsm_sample sample;
+    fsm_open_sample("sine", &sample);
+    bpl_start_sample(&sample, 120);
+
+
+
+
+    while(1) {
+        bpl_loop();
+    }
+/*
   //  test_fsm();
     test_dac_manager();
-    
+
     clt_init();
     clt_tim_enable();
     clt_ms_trigger_set(2000);
@@ -44,6 +60,8 @@ int main(void) {
         }
 
     };
+
+    */
     return 0;
     
 }

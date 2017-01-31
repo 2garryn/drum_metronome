@@ -26,7 +26,7 @@ void dac_init(void) {
     
     TIM_TimeBaseStructInit(&TIM6_TimeBase); 
     TIM6_TimeBase.TIM_Period        = 1;         
-    TIM6_TimeBase.TIM_Prescaler     = 875 + 1;       
+    TIM6_TimeBase.TIM_Prescaler     = 875 - 1;       
     TIM6_TimeBase.TIM_ClockDivision = 0;  
     TIM6_TimeBase.TIM_CounterMode   = TIM_CounterMode_Up;  
     TIM_TimeBaseInit(TIM6, &TIM6_TimeBase);

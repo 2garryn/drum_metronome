@@ -5,7 +5,6 @@ uint16_t clt_ms_trigger = -1;
 uint16_t clt_ms_counter = 0;
 uint16_t clt_ms_counter_flag = 0;
 
-
 void clt_init(void) {
     LOGD("clt_init", 0);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
@@ -14,12 +13,10 @@ void clt_init(void) {
 
     TIM_TimeBaseStructInit(&TIM2_TimeBase); 
     TIM2_TimeBase.TIM_Period        = 1000 - 1;         
-    TIM2_TimeBase.TIM_Prescaler     = 42 - 1;       
+    TIM2_TimeBase.TIM_Prescaler     = 84 - 1;       
     TIM2_TimeBase.TIM_ClockDivision = 0;  
     TIM2_TimeBase.TIM_CounterMode   = TIM_CounterMode_Up;  
     TIM_TimeBaseInit(TIM2, &TIM2_TimeBase);
-
-
 
     nvicStructure.NVIC_IRQChannel = TIM2_IRQn;
     nvicStructure.NVIC_IRQChannelPreemptionPriority = 0;
@@ -42,7 +39,7 @@ void clt_tim_disable(void) {
 }
 
 void clt_ms_trigger_set(uint16_t ms) {
-    LOGD("clt_ms_trigger_set", 0);
+    LOGD("clt_ms_trigger_set", ms);
     clt_ms_trigger = ms;
     clt_ms_counter = 0;
 }
@@ -64,6 +61,8 @@ uint8_t clt_flag_is_set(void) {
 void clt_flag_reset(void) {
     clt_click_flag = 0;
 } 
+
+uint8_t is_light = FALSE;
 
 void TIM2_IRQHandler(void) {
   TIM2->SR &= ~TIM_SR_UIF; //Сбрасываем флаг UIF

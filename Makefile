@@ -52,6 +52,7 @@ SRC+=fs_manager.c
 SRC+=uart_manager.c
 SRC+=dac_manager.c
 SRC+=clock_timer.c
+SRC+=bar_player.c
 
 # FatFS Files
 SRC+=diskio.c

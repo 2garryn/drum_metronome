@@ -3,6 +3,7 @@
 
 #include <stm32f4xx.h>
 #include "uart_manager.h"
+#include "common.h"
 
 void clt_init(void);
 void clt_tim_enable(void);
