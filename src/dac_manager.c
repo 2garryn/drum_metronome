@@ -85,6 +85,14 @@ void dac_timer_disable() {
     TIM_Cmd(TIM6, DISABLE);
 }
 
+uint8_t dac_file_reset() {
+    if(fsm_seek_raw_wav(current_file) == RET_ERROR) {
+        return RET_ERROR;
+    } else {
+        return RET_OK;
+    }
+}
+
 uint8_t dac_load_file(FIL * fil) {
     LOGD("dac_play", 0);
     uint8_t result;
@@ -98,6 +106,7 @@ uint8_t dac_load_file(FIL * fil) {
     }
     return RET_OK;
 }
+
 
 uint8_t dac_loop(void) {
     uint8_t res = RET_OK;

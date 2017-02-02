@@ -27,5 +27,6 @@ void bpl_loop(void) {
     dac_result = dac_loop();
     if(dac_result == RET_ERROR || dac_result == RET_FILE_FINISHED ) {
         dac_timer_disable();
+        dac_file_reset();
     }
 }
