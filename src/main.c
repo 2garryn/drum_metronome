@@ -24,7 +24,7 @@ int main(void) {
 
     fsm_sample sample;
     fsm_open_sample("sine", &sample);
-    bpl_start_sample(&sample, 120);
+    bpl_start_sample(&sample, 300);
 
 
 

@@ -114,8 +114,13 @@ uint8_t fsm_read_file(FIL * fil, unsigned char * buffer, uint16_t length) {
 		return RET_ERROR;
 	}
 	if(cnt1 < length) {
+		while(cnt1 < length) {
+			*(buffer + cnt1) = 0;
+			cnt1++;
+		}  
 		return RET_FILE_FINISHED;
 	}
+	return RET_OK;
 }
 
 

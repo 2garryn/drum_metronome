@@ -6,7 +6,7 @@ uint8_t bpl_start_sample(fsm_sample * sample,  uint16_t bpm) {
     uint16_t bpm_interval = (uint16_t) lroundf(60000.0f / bpm);
     LOGD("Bpm is set", bpm_interval);
     dac_enable();
-    dac_load_file(&(sample->downbeat_fil));;
+    dac_load_file(&(sample->offbeat_fil));
     clt_ms_trigger_clear();
     clt_ms_trigger_set(bpm_interval);
     clt_tim_enable();

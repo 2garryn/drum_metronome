@@ -2,7 +2,7 @@
 
 
 void init_UART(){
-    uint32_t baudrate = 9600;
+    uint32_t baudrate = 115200;
 	GPIO_InitTypeDef GPIO_InitStruct; // this is for the GPIO pins used as TX and RX
 	USART_InitTypeDef USART_InitStruct; // this is for the USART1 initilization
 	

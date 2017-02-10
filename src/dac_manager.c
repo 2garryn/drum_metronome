@@ -75,14 +75,17 @@ void dac_disable(void) {
 }
 
 void dac_timer_enable() {
+    fsm_read_file(current_file, &dac_buff[0], 512);
     loop_go = TRUE;
-    DMA_SetCurrDataCounter(DMA1_Stream5, 0);
+  //  DMA_SetCurrDataCounter(DMA1_Stream5, 512);
+  //  DMA_Cmd(DMA1_Stream5, ENABLE);
     TIM_Cmd(TIM6, ENABLE);
 }
 
 void dac_timer_disable() {
     loop_go = FALSE;
     TIM_Cmd(TIM6, DISABLE);
+ //   DMA_Cmd(DMA1_Stream5, DISABLE);
 }
 
 uint8_t dac_file_reset() {
@@ -111,23 +114,23 @@ uint8_t dac_load_file(FIL * fil) {
 uint8_t dac_loop(void) {
     uint8_t res = RET_OK;
     if((DMA1->HISR & DMA_HISR_HTIF5) && loop_go) {
-        res = fsm_read_file(current_file, &dac_buff[0], 256);    //загрузить ее данными
-        DMA1->HIFCR |= DMA_HIFCR_CHTIF5;   
-        if(res == RET_FILE_FINISHED || res == RET_ERROR) {
-            loop_go = FALSE;
-        };
-        return res;
+        res = fsm_read_file(current_file, &dac_buff[0], 256); 
+        DMA1->HIFCR |= DMA_HIFCR_CHTIF5;
+        if(res == RET_FILE_FINISHED) {
+            return RET_FILE_FINISHED;
+        }
     }
     if((DMA1->HISR & DMA_HISR_TCIF5) && loop_go) {
-        res = fsm_read_file(current_file, &dac_buff[256], 256);
+        res = fsm_read_file(current_file, &dac_buff[256], 256); 
         DMA1->HIFCR |= DMA_HIFCR_CTCIF5;
-        if(res == RET_FILE_FINISHED || res == RET_ERROR) {
-            loop_go = FALSE;
-        } 
-        return res;
+        if(res == RET_FILE_FINISHED) {
+            return RET_FILE_FINISHED;
+        }
     }
-    return res;
+    return RET_OK;
 }
+
+
 
 
 void test_dac_manager(void){
