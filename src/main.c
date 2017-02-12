@@ -4,6 +4,7 @@
 #include "fs_manager.h"
 #include "clock_timer.h"
 #include "bar_player.h"
+#include "common.h"
 
 #include "stm32f4xx.h"       // file header basic system 
 #include <math.h>
@@ -23,8 +24,21 @@ int main(void) {
     dac_init();
 
     fsm_sample sample;
-    fsm_open_sample("sine", &sample);
-    bpl_start_sample(&sample, 300);
+    uint8_t track[] = {
+        DOWNBEAT,
+        OFFBEAT,
+        OFFBEAT,
+        DOWNBEAT,
+        OFFBEAT,
+        NOTHING,
+        NOTHING,
+        NOTHING,
+        NOTHING
+    };
+
+
+    fsm_open_sample("frank", &sample);
+    bpl_start_sample(&sample, 200, &track);
 
 
 

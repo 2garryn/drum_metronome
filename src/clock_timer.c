@@ -1,9 +1,8 @@
 #include "clock_timer.h"
 
-uint8_t clt_click_flag = 0;
-uint16_t clt_ms_trigger = -1;
+int16_t clt_ms_trigger = -1;
 uint16_t clt_ms_counter = 0;
-uint16_t clt_ms_counter_flag = 0;
+uint8_t clt_ms_counter_flag = FALSE;
 
 void clt_init(void) {
     LOGD("clt_init", 0);
@@ -30,6 +29,7 @@ void clt_tim_enable(void) {
     LOGD("clt_tim_enable", 0);
     TIM_Cmd(TIM2, ENABLE);
     NVIC_EnableIRQ(TIM2_IRQn);
+    clt_ms_counter_flag = TRUE;
 }
 
 void clt_tim_disable(void) {
@@ -38,7 +38,7 @@ void clt_tim_disable(void) {
     NVIC_DisableIRQ(TIM2_IRQn);
 }
 
-void clt_ms_trigger_set(uint16_t ms) {
+void clt_ms_trigger_interval_set(uint16_t ms) {
     LOGD("clt_ms_trigger_set", ms);
     clt_ms_trigger = ms;
     clt_ms_counter = 0;
@@ -50,27 +50,17 @@ uint8_t clt_ms_trigger_is_set(void) {
 }
 
 void clt_ms_trigger_clear(void) {
-    clt_ms_counter_flag = 0;
+    clt_ms_counter_flag = FALSE;
     clt_ms_counter = 0;
 }
 
-uint8_t clt_flag_is_set(void) {
-    return clt_click_flag;
-}
-
-void clt_flag_reset(void) {
-    clt_click_flag = 0;
-} 
-
-uint8_t is_light = FALSE;
 
 void TIM2_IRQHandler(void) {
-  TIM2->SR &= ~TIM_SR_UIF; //Сбрасываем флаг UIF
-  clt_click_flag = 1;
+  TIM2->SR &= ~TIM_SR_UIF; 
   if(clt_ms_trigger != -1){
     clt_ms_counter++;
     if(clt_ms_counter == clt_ms_trigger) {
-      clt_ms_counter_flag = 1;
+      clt_ms_counter_flag = TRUE;
     }
   }
 }

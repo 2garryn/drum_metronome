@@ -8,10 +8,8 @@
 void clt_init(void);
 void clt_tim_enable(void);
 void clt_tim_disable(void);
-uint8_t clt_flag_is_set(void);
-void clt_flag_reset(void);
 
-void clt_ms_trigger_set(uint16_t ms);
+void clt_ms_trigger_interval_set(uint16_t ms);
 void clt_ms_trigger_clear(void);
 uint8_t clt_ms_trigger_is_set(void);
 

@@ -77,15 +77,14 @@ void dac_disable(void) {
 void dac_timer_enable() {
     fsm_read_file(current_file, &dac_buff[0], 512);
     loop_go = TRUE;
-  //  DMA_SetCurrDataCounter(DMA1_Stream5, 512);
-  //  DMA_Cmd(DMA1_Stream5, ENABLE);
+    // TODO: How does it affect sound signal form?
+    DMA_SetCurrDataCounter(DMA1_Stream5, 512);
     TIM_Cmd(TIM6, ENABLE);
 }
 
 void dac_timer_disable() {
     loop_go = FALSE;
     TIM_Cmd(TIM6, DISABLE);
- //   DMA_Cmd(DMA1_Stream5, DISABLE);
 }
 
 uint8_t dac_file_reset() {
