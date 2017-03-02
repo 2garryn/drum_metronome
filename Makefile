@@ -1,4 +1,4 @@
-MakefileTARGET:=FreeRTOS
+TARGET:=metr
 # TODO change to your ARM gcc toolchain path
 TOOLCHAIN_ROOT:=~/gcc-arm-none-eabi
 #TOOLCHAIN_PATH:=$(TOOLCHAIN_ROOT)/bin
@@ -53,6 +53,8 @@ SRC+=uart_manager.c
 SRC+=dac_manager.c
 SRC+=clock_timer.c
 SRC+=bar_player.c
+SRC+=btn_manager.c
+SRC+=btn_callback.c
 
 # FatFS Files
 SRC+=diskio.c

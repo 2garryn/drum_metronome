@@ -2,15 +2,18 @@
 #include "uart_manager.h"
 #include "dac_manager.h"
 #include "fs_manager.h"
+#include "btn_manager.h"
 #include "clock_timer.h"
 #include "bar_player.h"
 #include "common.h"
+#include "btn_manager.h"
+
 
 #include "stm32f4xx.h"       // file header basic system 
 #include <math.h>
 
-#define LED_BLUE_ON   GPIOD->BSRRL = GPIO_Pin_15;  // led biru on
-#define LED_BLUE_OFF  GPIOD->BSRRH = GPIO_Pin_15;  // led biru off
+//#define LED_BLUE_ON   GPIOD->BSRRL = GPIO_Pin_15;  // led biru on
+//#define LED_BLUE_OFF  GPIOD->BSRRH = GPIO_Pin_15;  // led biru off
 
 
 int main(void) {
@@ -19,6 +22,15 @@ int main(void) {
 //Wait for clock to stabilize
     while (!RCC_WaitForHSEStartUp());
     init_UART();
+    btn_init();
+    btn_enable();
+
+
+
+    while(1) {
+        btn_loop();
+    }
+  /*
     fsm_init();
     clt_init();
     dac_init();
@@ -46,6 +58,7 @@ int main(void) {
     while(1) {
         bpl_loop();
     }
+    */
 /*
   //  test_fsm();
     test_dac_manager();
@@ -79,7 +92,7 @@ int main(void) {
     return 0;
     
 }
-
+/*
 void inisialisasi() // Inisialisasi port D, port tempat LED berada
 {
     GPIO_InitTypeDef  GPIO_InitStructure;
@@ -96,3 +109,4 @@ void delay111(uint32_t ulang) // procedure delay
    while (ulang > 0)
    {ulang--;}
 }
+*/
