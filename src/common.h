@@ -17,6 +17,12 @@ typedef int8_t BOOL;
 
 #define FALSE 0
 
+// SET/RESET state
+
+#define SET 1
+
+#define RESET 0
+
 //BEATS INDEX FOR TRACK
 
 #define DOWNBEAT 1

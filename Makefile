@@ -55,6 +55,8 @@ SRC+=clock_timer.c
 SRC+=bar_player.c
 SRC+=btn_manager.c
 SRC+=btn_callback.c
+SRC+=systick_manager.c
+SRC+=lcd_manager.c
 
 # FatFS Files
 SRC+=diskio.c

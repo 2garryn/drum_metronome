@@ -7,6 +7,8 @@
 #include "bar_player.h"
 #include "common.h"
 #include "btn_manager.h"
+#include "lcd_manager.h"
+#include "systick_manager.h"
 
 
 #include "stm32f4xx.h"       // file header basic system 
@@ -18,13 +20,15 @@
 
 int main(void) {
 //Enable HSE clock
-    RCC_HSEConfig(RCC_HSE_ON);
+    RCC_HSEConfig(RCC_HSE_ON); 
 //Wait for clock to stabilize
     while (!RCC_WaitForHSEStartUp());
     init_UART();
     btn_init();
     btn_enable();
-
+    systick_init();
+    lcd_init();
+    lcd_demo();
 
 
     while(1) {
