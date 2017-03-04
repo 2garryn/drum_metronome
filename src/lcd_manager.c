@@ -63,11 +63,11 @@ static void init_display() {
 
 
 static void write_command(uint8_t command) {
-	write_to_display(command, COMMAND);
+    write_to_display(command, COMMAND);
 }
 
 static void write_data(uint8_t data) {
-	write_to_display(data, DATA);
+    write_to_display(data, DATA);
 }
 
 static void write_to_display(uint8_t data, uint8_t mode) {
