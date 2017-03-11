@@ -34,3 +34,11 @@ typedef int8_t BOOL;
 #define MAX_BPM 250
 
 #define MIN_BPM 30
+
+// RHYTM NOTES
+#define QUARTER_NOTE 0
+
+#define EIGHTH_NOTE 1
+
+#define SiXTEENTH_NOTE 2 
+

@@ -41,7 +41,15 @@ void lcd_main_page_set_bpm(uint16_t bpm) {
 }
 
 void lcd_main_page_set_note(uint8_t note) {
-
+    uint8_t i = 0;
+    for(uint8_t y = 0x40; y <= 0x41; y++) {
+        write_command(y);
+        write_command(0x80);
+        for(uint8_t j = 0; j < 24; j++) {
+            write_data(get_rhytm_note_font(note, i));
+            i++;
+        }
+    }  
 }
 
 static void render_bpm_num(uint8_t num, uint8_t position) {

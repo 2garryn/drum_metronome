@@ -3,7 +3,7 @@
 //fsm_sample sample;
 static uint8_t start_stop;
 static uint16_t current_bpm = 120;
-static uint8_t current_note;
+static uint8_t current_note = 0;
 
 void main_mgr_init() {
     lcd_set_current_page(MAIN_PAGE);
@@ -37,6 +37,21 @@ void main_mgr_start_stop_keydown() {
     //    bpl_start_sample(sample, current_bpm, current_note);
         start_stop = 1;
     }
+}
+
+void main_mgr_select_note_keydown() {
+    switch (current_note) {
+        case QUARTER_NOTE:
+            current_note = EIGHTH_NOTE;
+            break;
+        case EIGHTH_NOTE:
+            current_note = SiXTEENTH_NOTE;
+            break;
+        case SiXTEENTH_NOTE:
+            current_note = QUARTER_NOTE;
+            break;
+    }
+    lcd_set_note(current_note);
 }
 
 void main_mgr_increment_current_bpm(uint8_t incr) {

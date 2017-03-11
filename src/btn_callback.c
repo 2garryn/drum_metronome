@@ -15,6 +15,7 @@ void btn_callback_clicked_0_2() {
 }
 void btn_callback_clicked_0_3() {
     LOGD("Clicked 0 - 3", 0);
+    main_mgr_select_note_keydown();
 }
 void btn_callback_clicked_1_0() {
     LOGD("Clicked 1 - 0", 0);
