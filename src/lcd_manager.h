@@ -1,29 +1,18 @@
 #ifndef LCDMANAGER_H_INCLUDED
 #define LCDMANAGER_H_INCLUDED
 
-#include "systick_manager.h"
+#include "lcd_main_page.h"
 
-#define RCC_GPIO RCC_AHB1Periph_GPIOE
+#define MAIN_PAGE 0
 
-#define GPIO_PORT GPIOE
+void lcd_set_current_page(uint8_t page);
 
-#define CS_PIN GPIO_Pin_7
+void lcd_set_bpm(uint16_t bpm);
 
-#define RST_PIN GPIO_Pin_8
+void lcd_set_note(uint8_t note);
 
-#define DC_PIN GPIO_Pin_9
+uint8_t lcd_get_current_page();
 
-#define DIN_PIN GPIO_Pin_10
-
-#define SCK_PIN GPIO_Pin_11
-
-#define LED_PIN GPIO_Pin_12
-
-#define COMMAND 0
-
-#define DATA 1
-
-void lcd_demo();
 void lcd_init();
 
-#endif /* LCDMANAGER_H_INCLUDED */
+#endif

@@ -9,6 +9,7 @@
 #include "btn_manager.h"
 #include "lcd_manager.h"
 #include "systick_manager.h"
+#include "main_manager.h"
 
 
 #include "stm32f4xx.h"       // file header basic system 
@@ -23,16 +24,22 @@ int main(void) {
     RCC_HSEConfig(RCC_HSE_ON); 
 //Wait for clock to stabilize
     while (!RCC_WaitForHSEStartUp());
-    init_UART();
+    init_UART();    
+    fsm_init();
+    clt_init();
+    dac_init();
     btn_init();
     btn_enable();
     systick_init();
     lcd_init();
-    lcd_demo();
+    main_mgr_init();
+ 
 
 
     while(1) {
         btn_loop();
+        bpl_loop();
+        dac_loop();
     }
   /*
     fsm_init();

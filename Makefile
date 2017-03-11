@@ -57,6 +57,10 @@ SRC+=btn_manager.c
 SRC+=btn_callback.c
 SRC+=systick_manager.c
 SRC+=lcd_manager.c
+SRC+=main_manager.c
+SRC+=lcd_5110_imp.c
+SRC+=lcd_5110_fonts.c
+SRC+=lcd_main_page.c
 
 # FatFS Files
 SRC+=diskio.c

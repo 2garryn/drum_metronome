@@ -30,3 +30,7 @@ typedef int8_t BOOL;
 #define OFFBEAT 2
 
 #define NOTHING 0
+
+#define MAX_BPM 250
+
+#define MIN_BPM 30
