@@ -4,5 +4,6 @@
 
 uint8_t get_bpm_main_font(uint8_t num, uint8_t i);
 uint8_t get_rhytm_note_font(uint8_t rhytm_note, uint8_t i);
+uint8_t get_simple_font(uint8_t ch, uint8_t line);
 
 #endif

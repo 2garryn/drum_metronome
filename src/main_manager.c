@@ -2,7 +2,7 @@
 
 //fsm_sample sample;
 static uint8_t start_stop;
-static uint16_t current_bpm = 120;
+static uint16_t current_bpm = 220;
 static uint8_t current_note = 0;
 
 void main_mgr_init() {
