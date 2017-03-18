@@ -108,6 +108,7 @@
 
 #include "ff.h"			/* Declarations of FatFs API */
 #include "diskio.h"		/* Declarations of disk I/O functions */
+#include "uart_manager.h"
 
 
 /*--------------------------------------------------------------------------
@@ -772,11 +773,15 @@ FRESULT move_window (
 {
 	if (sector != fs->winsect) {	/* Changed current window */
 #if !_FS_READONLY
-		if (sync_window(fs) != FR_OK)
+		if (sync_window(fs) != FR_OK) {
+            LOGD("SYN WIND ERROR", 666);
 			return FR_DISK_ERR;
+        }
 #endif
-		if (disk_read(fs->drv, fs->win, sector, 1))
+		if (disk_read(fs->drv, fs->win, sector, 1)) {
+             LOGD("SYN DISC READ ERROR", 666);
 			return FR_DISK_ERR;
+        }
 		fs->winsect = sector;
 	}
 
@@ -860,7 +865,7 @@ DWORD get_fat (	/* 0xFFFFFFFF:Disk error, 1:Internal error, Else:Cluster status 
 
 	if (clst < 2 || clst >= fs->n_fatent)	/* Check range */
 		return 1;
-
+    LOGD("FS FSTYPE", fs->fs_type);
 	switch (fs->fs_type) {
 	case FS_FAT12 :
 		bc = (UINT)clst; bc += bc / 2;
@@ -878,6 +883,7 @@ DWORD get_fat (	/* 0xFFFFFFFF:Disk error, 1:Internal error, Else:Cluster status 
 	case FS_FAT32 :
 		if (move_window(fs, fs->fatbase + (clst / (SS(fs) / 4)))) break;
 		p = &fs->win[clst * 4 % SS(fs)];
+        LOGD("GET FAT FAT32", LD_DWORD(p) & 0x0FFFFFFF);
 		return LD_DWORD(p) & 0x0FFFFFFF;
 	}
 
@@ -1168,6 +1174,7 @@ FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table, FR_DENIED:Could 
 		else {					/* Dynamic table */
 			if (((i / (SS(dp->fs) / SZ_DIR)) & (dp->fs->csize - 1)) == 0) {	/* Cluster changed? */
 				clst = get_fat(dp->fs, dp->clust);				/* Get next cluster */
+                LOGD("dir next create_chain", clst);
 				if (clst <= 1) return FR_INT_ERR;
 				if (clst == 0xFFFFFFFF) return FR_DISK_ERR;
 				if (clst >= dp->fs->n_fatent) {					/* If it reached end of dynamic table, */
@@ -1175,6 +1182,7 @@ FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table, FR_DENIED:Could 
 					BYTE c;
 					if (!stretch) return FR_NO_FILE;			/* If do not stretch, report EOT */
 					clst = create_chain(dp->fs, dp->clust);		/* Stretch cluster chain */
+                    
 					if (clst == 0) return FR_DENIED;			/* No free cluster */
 					if (clst == 1) return FR_INT_ERR;
 					if (clst == 0xFFFFFFFF) return FR_DISK_ERR;
@@ -1476,6 +1484,7 @@ FRESULT dir_find (
 #endif
 	do {
 		res = move_window(dp->fs, dp->sect);
+            
 		if (res != FR_OK) break;
 		dir = dp->dir;					/* Ptr to the directory entry of current index */
 		c = dir[DIR_Name];
@@ -1506,6 +1515,7 @@ FRESULT dir_find (
 			break;
 #endif
 		res = dir_next(dp, 0);		/* Next entry */
+        LOGD("dir_next SDI", res);
 	} while (res == FR_OK);
 
 	return res;
@@ -2042,6 +2052,7 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 			res = create_name(dp, &path);	/* Get a segment name of the path */
 			if (res != FR_OK) break;
 			res = dir_find(dp);				/* Find an object with the sagment name */
+            LOGD("follow path dir find", res);
 			ns = dp->fn[NS];
 			if (res != FR_OK) {				/* Failed to find the object */
 				if (res == FR_NO_FILE) {	/* Object is not found */
@@ -3106,10 +3117,12 @@ FRESULT f_opendir (
 
 	/* Get logical drive number */
 	res = find_volume(&fs, &path, 0);
+    LOGD("ff find_volume", res);
 	if (res == FR_OK) {
 		dp->fs = fs;
 		INIT_BUF(*dp);
 		res = follow_path(dp, path);			/* Follow the path to the directory */
+        LOGD("ff follow path", res);
 		FREE_BUF();
 		if (res == FR_OK) {						/* Follow completed */
 			if (dp->dir) {						/* It is not the origin directory itself */

@@ -86,6 +86,7 @@ DWORD get_fattime (void);
 /* SDC specific commands */
 #define SDC_GO_IDLE_STATE 			0
 #define SDC_SEND_OP_COND 			1
+#define SDC_SEND_IF_COND            8 // CMD8
 #define SDC_SEND_CSD 				9
 #define SDC_SEND_CID				10
 #define SDC_STOP_TRANSMISSION		12
@@ -94,6 +95,8 @@ DWORD get_fattime (void);
 #define SDC_READ_MULTIPLE_BLOCK 	18
 #define SDC_WRITE_BLOCK				24
 #define SDC_WRITE_MULTIPLE_BLOCK 	25
+#define SDC_ACMD41 41
+#define SDC_CMD55 55
 
 #ifdef __cplusplus
 }

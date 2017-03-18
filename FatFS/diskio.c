@@ -9,6 +9,7 @@
 
 #include "diskio.h"		/* FatFs lower layer API */
 #include "uart_manager.h"
+#include "systick_manager.h"
 
 unsigned char sdcCommand[6];
 
@@ -20,7 +21,7 @@ void sdc_assert(void)
 void sdc_deassert(void)
 {
 	GPIOC->ODR |= GPIO_Pin_4;
-	SPI_send_single(SPI1, 0xFF); // send 8 clocks for SDC to set SDO tristate
+	SPI_send_single(SPI2, 0xFF); // send 8 clocks for SDC to set SDO tristate
 }
 
 uint8_t sdc_isConn(void)
@@ -48,18 +49,23 @@ void sdc_sendCommand(uint8_t command, uint8_t par1, uint8_t par2, uint8_t par3, 
 	{
 		sdcCommand[5] = 0x95; // precalculated CRC
 	}
-	else 
-	{
+	else if(command == SDC_SEND_IF_COND) {
+        sdcCommand[5] = 0x87;
+    } else if(command == SDC_ACMD41) {
+        sdcCommand[5] = 0xE5;
+    } else if(command == SDC_CMD55) {
+        sdcCommand[5] = 0x65;
+    } else {
 		sdcCommand[5] = 0xFF;
 	}
-	SPI_send(SPI1, sdcCommand, 6);
+	SPI_send(SPI2, sdcCommand, 6);
 }
 
 uint8_t sdc_getResponse(uint8_t response)
 {
 	for(uint8_t n = 0; n < 8; n++)
 	{
-        unsigned char vv = SPI_receive_single(SPI1);
+        unsigned char vv = SPI_receive_single(SPI2);
 		if (vv == response)
 		{
 			return 0;
@@ -96,20 +102,23 @@ DSTATUS disk_initialize (
 	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
 	GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-	SPI_init(SPI1, SPI_BaudRatePrescaler_256);
+	SPI_init(SPI2, SPI_BaudRatePrescaler_256);
 	// check wether SDC is inserted into socket
 	if (!sdc_isConn())
 	{
+        LOGE("No Disk Connected", 0);
 		return STA_NODISK;
 	}
 	// send 10 dummy bytes to wake up SDC
 	for (uint8_t i = 0; i < 10; i++)
 	{
-		SPI_send_single(SPI1, 0xFF);
+		SPI_send_single(SPI2, 0xFF);
 	}
 	// assert SDC
 	sdc_assert();
+
 	// software reset the SDC
+    LOGD("SDC_GO_IDLE_STATE", 0);
 	sdc_sendCommand(SDC_GO_IDLE_STATE, 0, 0, 0, 0);
 	if (sdc_getResponse(0x01))
 	{
@@ -117,7 +126,55 @@ DSTATUS disk_initialize (
 	}
 	// wait for SDC to come out of idle state
 	uint8_t resp = 1;
-	while(resp)
+    LOGD("SDC_SEND_IF_COND", 0);
+   // sdc_sendCommand(SDC_SEND_OP_COND, 0, 0, 0, 0);
+   // uint8_t vv;
+
+    uint32_t if_arg = 0x1AA;
+
+    sdc_sendCommand(SDC_SEND_IF_COND, ((if_arg>>24)&0xFF), ((if_arg>>16)&0xFF), ((if_arg>>8)&0xFF), (if_arg&0xFF));
+    while(resp) {
+	//	sdc_sendCommand(SDC_SEND_OP_COND, 0, 0, 0, 0);
+		if (!sdc_getResponse(0x01))
+		{
+			resp = 0;
+		}
+	}
+    LOGD("SDC_CMD55", 0);
+    sdc_sendCommand(SDC_CMD55, 0,0,0,0);
+    for(uint8_t i = 0; i < 4; i++) {
+        LOGD("Spi response", SPI_receive_single(SPI2));
+    }
+    if_arg = 0x00000000;
+   // sdc_sendCommand(SDC_ACMD41, ((if_arg>>24)&0xFF), ((if_arg>>16)&0xFF), ((if_arg>>8)&0xFF), (if_arg&0xFF));
+   LOGD("SDC_ACMD41", 0);
+   sdc_sendCommand(SDC_ACMD41, 0,0,0,0);
+    resp = 1;
+    uint8_t rec;
+    while(resp)
+	{
+		rec = SPI_receive_single(SPI2);
+        if(rec != 0xFF) {
+            LOGD("NEW REPLY", rec);
+            resp = 0;
+        }
+
+	}
+    resp = 1;
+    if(rec == 0x05) {
+        LOGD("SDC_SEND_OP_COND", 0);
+        while(resp) {
+		    sdc_sendCommand(SDC_SEND_OP_COND, 0, 0, 0, 0);
+		    if (!sdc_getResponse(0x00))
+		    {
+			    resp = 0;
+		    }
+	    }
+    }
+   
+
+    /*
+    while(resp)
 	{
 		sdc_sendCommand(SDC_SEND_OP_COND, 0, 0, 0, 0);
 		if (!sdc_getResponse(0x00))
@@ -125,11 +182,14 @@ DSTATUS disk_initialize (
 			resp = 0;
 		}
 	}
+    */
+    LOGD("sdc_deassert", 0);
 	// deassert the SDC
 	sdc_deassert();
+     LOGD("sdc_deassert finished", 0);
 
-	SPI_init(SPI1, SPI_BaudRatePrescaler_8);
-
+	SPI_init(SPI2, SPI_BaudRatePrescaler_32);
+    LOGD("SPI_init finised", 0);
 	return 0;
 }
 
@@ -191,8 +251,9 @@ DRESULT disk_read (
 	}
 	
 	sector *= 512; // convert LBA to physical address
+    LOGD("disk_read start sdc assert", count);
 	sdc_assert(); // assert SDC
-	
+	LOGD("disk_read start sdc assert finished", count);
 	// if multiple sectors are to be read
 	if(count > 1)
 	{
@@ -203,8 +264,8 @@ DRESULT disk_read (
 		while(count)
 		{
 			while(sdc_getResponse(0xFE)); // wait for data token 0xFE
-			SPI_receive(SPI1, buff, 512); // read 512 bytes
-			SPI_receive(SPI1, buf, 2); // receive two byte CRC
+			SPI_receive(SPI2, buff, 512); // read 512 bytes
+			SPI_receive(SPI2, buf, 2); // receive two byte CRC
 			count--;
 			buff += 512;
 		}
@@ -217,11 +278,11 @@ DRESULT disk_read (
 		sdc_sendCommand(SDC_READ_SINGLE_BLOCK, ((sector>>24)&0xFF), ((sector>>16)&0xFF), ((sector>>8)&0xFF), (sector&0xFF));
 		while(sdc_getResponse(0x00)); // wait for command acknowledgement
 		while(sdc_getResponse(0xFE)); // wait for data token 0xFE
-		SPI_receive(SPI1, buff, 512); // receive data
-		SPI_receive(SPI1, buf, 2); // receive two byte CRC
+		SPI_receive(SPI2, buff, 512); // receive data
+		SPI_receive(SPI2, buf, 2); // receive two byte CRC
 	}
 	
-	while(!SPI_receive_single(SPI1)); // wait until card is not busy anymore
+	while(!SPI_receive_single(SPI2)); // wait until card is not busy anymore
 	
 	sdc_deassert(); // deassert SDC 
 	
@@ -262,45 +323,45 @@ DRESULT disk_write (
 		// start multiple sector write
 		sdc_sendCommand(SDC_WRITE_MULTIPLE_BLOCK, ((sector>>24)&0xFF), ((sector>>16)&0xFF), ((sector>>8)&0xFF), (sector&0xFF));
 		while(sdc_getResponse(0x00)); // wait for R1 response
-		SPI_send_single(SPI1, 0xFF);  // send one byte gap
+		SPI_send_single(SPI2, 0xFF);  // send one byte gap
 		
 		while(count)
 		{
-			SPI_send_single(SPI1, 0xFC); // send multi byte data token 0xFC
-			SPI_send(SPI1, (unsigned char*)buff, 512); // send 512 bytes
-			SPI_send(SPI1, buf, 2); // send two byte CRC
+			SPI_send_single(SPI2, 0xFC); // send multi byte data token 0xFC
+			SPI_send(SPI2, (unsigned char*)buff, 512); // send 512 bytes
+			SPI_send(SPI2, buf, 2); // send two byte CRC
 			
 			// check if card has accepted data
-			result = SPI_receive_single(SPI1);
+			result = SPI_receive_single(SPI2);
 			if( (result & 0x1F) != 0x05)
 			{
 				return RES_ERROR;
 			}
 			count--;
 			buff += 512;
-			while(!SPI_receive_single(SPI1)); // wait until SD card is ready
+			while(!SPI_receive_single(SPI2)); // wait until SD card is ready
 		}
 		
-		SPI_send_single(SPI1, 0xFD); // send stop transmission data token 0xFD		
-		SPI_send_single(SPI1, 0xFF);  // send one byte gap
+		SPI_send_single(SPI2, 0xFD); // send stop transmission data token 0xFD		
+		SPI_send_single(SPI2, 0xFF);  // send one byte gap
 	}
 	else // if single sector is to be written
 	{
 		sdc_sendCommand(SDC_WRITE_BLOCK, ((sector>>24)&0xFF), ((sector>>16)&0xFF), ((sector>>8)&0xFF), (sector&0xFF));
 		while(sdc_getResponse(0x00)); // wait for R1 response
-		SPI_send_single(SPI1, 0xFF);  // send one byte gap
-		SPI_send_single(SPI1, 0xFE); // send data token 0xFE
-		SPI_send(SPI1, (unsigned char*)buff, 512); // send data
-		SPI_send(SPI1, buf, 2); // send two byte CRC
+		SPI_send_single(SPI2, 0xFF);  // send one byte gap
+		SPI_send_single(SPI2, 0xFE); // send data token 0xFE
+		SPI_send(SPI2, (unsigned char*)buff, 512); // send data
+		SPI_send(SPI2, buf, 2); // send two byte CRC
 		// check if card has accepted data
-		result = SPI_receive_single(SPI1);
+		result = SPI_receive_single(SPI2);
 		if( (result & 0x1F) != 0x05)
 		{
 			return RES_ERROR;
 		}
 	}
 	
-	while(!SPI_receive_single(SPI1)); // wait until card is not busy anymore
+	while(!SPI_receive_single(SPI2)); // wait until card is not busy anymore
 	
 	sdc_deassert(); // deassert SDC 
 	
