@@ -178,7 +178,7 @@ DSTATUS disk_initialize (
 	chip_deselect();
 
 	if (ty) {			/* OK */
-		SPI_BaudRate(SPI_BaudRatePrescaler_8);			/* Set fast clock */
+        SPI_init(SPI_BaudRatePrescaler_8);    
 		Stat &= ~STA_NOINIT;	/* Clear STA_NOINIT flag */
 	} else {			/* Failed */
 		Stat = STA_NOINIT;
