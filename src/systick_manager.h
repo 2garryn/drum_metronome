@@ -11,5 +11,7 @@
 void systick_init();
 void systick_delay(volatile uint32_t ms);
 void SysTick_Handler(void);
+void systick_set_timer(uint8_t timer, uint16_t time);
+uint8_t systick_get_timer(uint8_t timer);
 
 #endif

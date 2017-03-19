@@ -3,12 +3,19 @@
 
 #include <stm32f4xx.h>
 
-void SPI_init(SPI_TypeDef* SPIx, unsigned int prescaler);
-void SPI_send_single(SPI_TypeDef* SPIx, unsigned char data);
-unsigned char SPI_receive_single(SPI_TypeDef* SPIx);
-void SPI_send(SPI_TypeDef* SPIx, unsigned char* data, unsigned int length);
-void SPI_receive(SPI_TypeDef* SPIx, unsigned char* data, unsigned int length);
-void SPI_transmit(SPI_TypeDef* SPIx, unsigned char* txbuf, unsigned char* rxbuf, unsigned int len);
+void SPI_init(uint16_t prescaler);
+void CS_init();
+uint8_t SPI_send_single(uint8_t data);
+uint8_t SPI_receive_single();
+void SPI_send(uint8_t* data, unsigned int length);
+void SPI_receive(uint8_t* data, unsigned int length);
+void SPI_transmit(uint8_t* txbuf, uint8_t* rxbuf, unsigned int len);
+
+void CS_set();
+void CS_reset();
+void SPI_BaudRate(uint16_t prescaler);
+
+#define	_BV(bit) (1<<(bit))
 
 
 #endif // _SPI_H_

@@ -1,6 +1,9 @@
 #include "ff_spi.h"
 
-void SPI_init(SPI_TypeDef* SPIx, unsigned int prescaler)
+#define SPI_PERIPH SPI2
+#define SPI_PERIPH_CLOCK RCC_APB1Periph_SPI2
+
+void SPI_init(uint16_t prescaler)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
 	SPI_InitTypeDef SPI_InitStruct;
@@ -42,7 +45,7 @@ void SPI_init(SPI_TypeDef* SPIx, unsigned int prescaler)
 	GPIO_PinAFConfig(GPIOC, GPIO_PinSource3, GPIO_AF_SPI2);
 	
 	// enable peripheral clock
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
+	RCC_APB1PeriphClockCmd(SPI_PERIPH_CLOCK, ENABLE);
 	
 	/* configure SPI1 in Mode 0 
 	 * CPOL = 0 --> clock is low when idle
@@ -57,57 +60,82 @@ void SPI_init(SPI_TypeDef* SPIx, unsigned int prescaler)
 	SPI_InitStruct.SPI_BaudRatePrescaler = prescaler; // SPI frequency is APB2 frequency / 4
 	SPI_InitStruct.SPI_FirstBit = SPI_FirstBit_MSB;// data is transmitted MSB 
     SPI_InitStruct.SPI_CRCPolynomial = 7;
-	SPI_Init(SPIx, &SPI_InitStruct); 
+	SPI_Init(SPI_PERIPH, &SPI_InitStruct); 
 	
-	SPI_Cmd(SPIx, ENABLE); // enable SPI1
+	SPI_Cmd(SPI_PERIPH, ENABLE); // enable SPI1
 }
 
-void SPI_send_single(SPI_TypeDef* SPIx, unsigned char data)
+void CS_init() {
+    GPIO_InitTypeDef GPIO_InitStruct;
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_4;
+	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
+	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+	GPIOC->ODR |= GPIO_Pin_4;
+}
+
+void CS_set() {
+    GPIOC->ODR |= GPIO_Pin_4;
+}
+
+void CS_reset() {
+    GPIOC->ODR &= ~GPIO_Pin_4;
+}
+
+void SPI_BaudRate(uint16_t prescaler) {
+    SPI_PERIPH->CR1 |= prescaler;
+}
+
+uint8_t SPI_send_single(uint8_t data)
 {
-	unsigned char tmp;
-	SPIx->DR = data; // write data to be transmitted to the SPI data register
-	while( !(SPIx->SR & SPI_I2S_FLAG_TXE) ); // wait until transmit complete
-	while( !(SPIx->SR & SPI_I2S_FLAG_RXNE) ); // wait until receive complete
-	while( SPIx->SR & SPI_I2S_FLAG_BSY ); // wait until SPI is not busy anymore
-	tmp = SPIx->DR; // return received data from SPI data register	
+	//unsigned char tmp;
+	SPI_PERIPH->DR = data; // write data to be transmitted to the SPI data register
+	while( !(SPI_PERIPH->SR & SPI_I2S_FLAG_TXE) ); // wait until transmit complete
+	while( !(SPI_PERIPH->SR & SPI_I2S_FLAG_RXNE) ); // wait until receive complete
+	while( SPI_PERIPH->SR & SPI_I2S_FLAG_BSY ); // wait until SPI is not busy anymore
+	return SPI_PERIPH->DR; // return received data from SPI data register	
 }
 
-unsigned char SPI_receive_single(SPI_TypeDef* SPIx)
+uint8_t SPI_receive_single()
 {
-	SPIx->DR = 0xFF; // write data to be transmitted to the SPI data register
-	while( !(SPIx->SR & SPI_I2S_FLAG_TXE) ); // wait until transmit complete
-	while( !(SPIx->SR & SPI_I2S_FLAG_RXNE) ); // wait until receive complete
-	while( SPIx->SR & SPI_I2S_FLAG_BSY ); // wait until SPI is not busy anymore
-	return SPIx->DR; // return received data from SPI data register
+	SPI_PERIPH->DR = 0xFF; // write data to be transmitted to the SPI data register
+	while( !(SPI_PERIPH->SR & SPI_I2S_FLAG_TXE) ); // wait until transmit complete
+	while( !(SPI_PERIPH->SR & SPI_I2S_FLAG_RXNE) ); // wait until receive complete
+	while( SPI_PERIPH->SR & SPI_I2S_FLAG_BSY ); // wait until SPI is not busy anymore
+	return SPI_PERIPH->DR; // return received data from SPI data register
 }
 
-void SPI_send(SPI_TypeDef* SPIx, unsigned char* data, unsigned int length)
+void SPI_send(uint8_t* data, unsigned int length)
 {
 	while (length--)
 	{
-		SPI_send_single(SPIx, *data);
+		SPI_send_single(*data);
 		data++;
 	}
 }
 
-void SPI_receive(SPI_TypeDef* SPIx, unsigned char* data, unsigned int length)
+void SPI_receive(uint8_t* data, unsigned int length)
 {
 	while (length--)
 	{
-		*data = SPI_receive_single(SPIx);
+		*data = SPI_receive_single();
 		data++;
 	}
 }
 
-void SPI_transmit(SPI_TypeDef* SPIx, unsigned char* txbuf, unsigned char* rxbuf, unsigned int len)
+void SPI_transmit(uint8_t* txbuf, uint8_t* rxbuf, unsigned int len)
 {
 	while (len--)
 	{
-		SPIx->DR = *txbuf; // write data to be transmitted to the SPI data register
-		while( !(SPIx->SR & SPI_I2S_FLAG_TXE) ); // wait until transmit complete
-		while( !(SPIx->SR & SPI_I2S_FLAG_RXNE) ); // wait until receive complete
-		while( SPIx->SR & SPI_I2S_FLAG_BSY ); // wait until SPI is not busy anymore
-		*rxbuf = SPIx->DR; // return received data from SPI data register
+		SPI_PERIPH->DR = *txbuf; // write data to be transmitted to the SPI data register
+		while( !(SPI_PERIPH->SR & SPI_I2S_FLAG_TXE) ); // wait until transmit complete
+		while( !(SPI_PERIPH->SR & SPI_I2S_FLAG_RXNE) ); // wait until receive complete
+		while( SPI_PERIPH->SR & SPI_I2S_FLAG_BSY ); // wait until SPI is not busy anymore
+		*rxbuf = SPI_PERIPH->DR; // return received data from SPI data register
 		txbuf++;
 		rxbuf++;	 
 	}

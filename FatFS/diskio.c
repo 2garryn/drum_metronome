@@ -1,231 +1,193 @@
 /*-----------------------------------------------------------------------*/
-/* Low level disk I/O module skeleton for FatFs     (C)ChaN, 2013        */
+/* Low level disk I/O module skeleton for FatFs     (C)ChaN, 2016        */
 /*-----------------------------------------------------------------------*/
 /* If a working storage control module is available, it should be        */
 /* attached to the FatFs via a glue function rather than modifying it.   */
 /* This is an example of glue functions to attach various exsisting      */
-/* storage control module to the FatFs module with a defined API.        */
+/* storage control modules to the FatFs module with a defined API.       */
 /*-----------------------------------------------------------------------*/
 
 #include "diskio.h"		/* FatFs lower layer API */
-#include "uart_manager.h"
 #include "systick_manager.h"
+#include "ff_spi.h"
+#include "uart_manager.h"
 
-unsigned char sdcCommand[6];
+/* MMC/SD command */
+#define CMD0	(0)			/* GO_IDLE_STATE */
+#define CMD1	(1)			/* SEND_OP_COND (MMC) */
+#define	ACMD41	(0x80+41)	/* SEND_OP_COND (SDC) */
+#define CMD8	(8)			/* SEND_IF_COND */
+#define CMD9	(9)			/* SEND_CSD */
+#define CMD10	(10)		/* SEND_CID */
+#define CMD12	(12)		/* STOP_TRANSMISSION */
+#define ACMD13	(0x80+13)	/* SD_STATUS (SDC) */
+#define CMD16	(16)		/* SET_BLOCKLEN */
+#define CMD17	(17)		/* READ_SINGLE_BLOCK */
+#define CMD18	(18)		/* READ_MULTIPLE_BLOCK */
+#define CMD23	(23)		/* SET_BLOCK_COUNT (MMC) */
+#define	ACMD23	(0x80+23)	/* SET_WR_BLK_ERASE_COUNT (SDC) */
+#define CMD24	(24)		/* WRITE_BLOCK */
+#define CMD25	(25)		/* WRITE_MULTIPLE_BLOCK */
+#define CMD32	(32)		/* ERASE_ER_BLK_START */
+#define CMD33	(33)		/* ERASE_ER_BLK_END */
+#define CMD38	(38)		/* ERASE */
+#define CMD55	(55)		/* APP_CMD */
+#define CMD58	(58)		/* READ_OCR */
 
-void sdc_assert(void)
-{
-	GPIOC->ODR &= ~GPIO_Pin_4;
+
+/*-----------------------------------------------------------------------*/
+/* Helper functions                                                      */
+/*-----------------------------------------------------------------------*/
+static uint8_t wait_ready (UINT wt) {/* 1:Ready, 0:Timeout */
+	uint8_t d;
+	systick_set_timer(2, wt);
+	do {
+		d = SPI_send_single(0xFF);
+		/* This loop takes a time. Insert rot_rdq() here for multitask envilonment. */
+	} while (d != 0xFF && systick_get_timer(2));	/* Wait for card goes ready or timeout */
+
+	return (d == 0xFF) ? 1 : 0;
 }
 
-void sdc_deassert(void)
-{
-	GPIOC->ODR |= GPIO_Pin_4;
-	SPI_send_single(SPI2, 0xFF); // send 8 clocks for SDC to set SDO tristate
+static void chip_deselect(void) {
+	CS_set();		/* Set CS# high */
+	SPI_send_single(0xFF);	/* Dummy clock (force DO hi-z for multiple slave SPI) */
 }
 
-uint8_t sdc_isConn(void)
-{
-    return 1;
-	if (GPIOC->IDR & GPIO_Pin_5)
-	{
-		return 0;
-	}
-	else
-	{
-		return 1;
-	}
+static uint8_t chip_select (void){	/* 1:OK, 0:Timeout */ 
+	CS_reset();		/* Set CS# low */
+	SPI_send_single(0xFF);	/* Dummy clock (force DO enabled) */
+	if (wait_ready(500)) return 1;	/* Wait for card ready */
+
+	chip_deselect();
+	return 0;	/* Timeout */
 }
 
-void sdc_sendCommand(uint8_t command, uint8_t par1, uint8_t par2, uint8_t par3, uint8_t par4)
-{
-	sdcCommand[0] = 0x40 | command;
-	sdcCommand[1] = par1;
-	sdcCommand[2] = par2;
-	sdcCommand[3] = par3;
-	sdcCommand[4] = par4;
-	
-	if (command == SDC_GO_IDLE_STATE)
-	{
-		sdcCommand[5] = 0x95; // precalculated CRC
-	}
-	else if(command == SDC_SEND_IF_COND) {
-        sdcCommand[5] = 0x87;
-    } else if(command == SDC_ACMD41) {
-        sdcCommand[5] = 0xE5;
-    } else if(command == SDC_CMD55) {
-        sdcCommand[5] = 0x65;
-    } else {
-		sdcCommand[5] = 0xFF;
-	}
-	SPI_send(SPI2, sdcCommand, 6);
+static uint8_t send_cmd(uint8_t cmd, uint32_t arg) {
+    uint8_t res, n;
+    if (cmd & 0x80) {	/* Send a CMD55 prior to ACMD<n> */
+		cmd &= 0x7F;
+		res = send_cmd(CMD55, 0);
+		if (res > 1) return res;
+	}   
+    if (cmd != CMD12) {
+		chip_deselect();
+		if (!chip_select()) return 0xFF;
+	} 
+    /* Send command packet */
+	SPI_send_single(0x40 | cmd);				/* Start + command index */
+	SPI_send_single((uint8_t)(arg >> 24));		/* Argument[31..24] */
+	SPI_send_single((uint8_t)(arg >> 16));		/* Argument[23..16] */
+	SPI_send_single((uint8_t)(arg >> 8));			/* Argument[15..8] */
+	SPI_send_single((uint8_t)arg);				/* Argument[7..0] */
+    n = 0x01;							/* Dummy CRC + Stop */
+	if (cmd == CMD0) n = 0x95;			/* Valid CRC for CMD0(0) */
+	if (cmd == CMD8) n = 0x87;			/* Valid CRC for CMD8(0x1AA) */
+    SPI_send_single(n);
+	/* Receive command resp */
+	if (cmd == CMD12) SPI_send_single(0xFF);	/* Diacard following one byte when CMD12 */
+	n = 10;								/* Wait for response (10 bytes max) */
+	do {
+		res = SPI_send_single(0xFF);
+    } while ((res & 0x80) && --n);
+
+	return res;							/* Return received response */
 }
 
-uint8_t sdc_getResponse(uint8_t response)
+static int rcvr_datablock (uint8_t *buff, uint16_t btr)		/* 1:OK, 0:Error */
 {
-	for(uint8_t n = 0; n < 8; n++)
-	{
-        unsigned char vv = SPI_receive_single(SPI2);
-		if (vv == response)
-		{
-			return 0;
-		}
-	}
-	return 1;
+	uint8_t token;
+
+
+	systick_set_timer(1, 200);
+	do {							/* Wait for DataStart token in timeout of 200ms */
+		token = SPI_send_single(0xFF);
+		/* This loop will take a time. Insert rot_rdq() here for multitask envilonment. */
+	} while ((token == 0xFF) && systick_get_timer(1));
+	if(token != 0xFE) return 0;		/* Function fails if invalid DataStart token or timeout */
+
+	SPI_receive(buff, btr);		/* Store trailing data to the buffer */
+	SPI_send_single(0xFF); SPI_send_single(0xFF);			/* Discard CRC */
+
+	return 1;						/* Function succeeded */
 }
+
+static uint8_t CardType;
+
+static volatile DSTATUS Stat = STA_NOINIT;	/* Physical drive status */
+
+/*-----------------------------------------------------------------------*/
+/* Get Drive Status                                                      */
+/*-----------------------------------------------------------------------*/
+
+DSTATUS disk_status (
+	BYTE drv		/* Physical drive nmuber to identify the drive */
+)
+{
+	if (drv) return STA_NOINIT;		/* Supports only drive 0 */
+
+	return Stat;	/* Return disk status */
+}
+
+
 
 /*-----------------------------------------------------------------------*/
 /* Inidialize a Drive                                                    */
 /*-----------------------------------------------------------------------*/
 
 DSTATUS disk_initialize (
-	BYTE pdrv				/* Physical drive nmuber (0..) */
-)
-{	
-	// initialize chip select line
-	// chip select is PC4
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_4;
-	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-	GPIOC->ODR |= GPIO_Pin_4;
-
-	// initialize card detect line
-	// card detect is PC5
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_5;
-	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN;
-	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
-	GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-	SPI_init(SPI2, SPI_BaudRatePrescaler_256);
-	// check wether SDC is inserted into socket
-	if (!sdc_isConn())
-	{
-        LOGE("No Disk Connected", 0);
-		return STA_NODISK;
-	}
-	// send 10 dummy bytes to wake up SDC
-	for (uint8_t i = 0; i < 10; i++)
-	{
-		SPI_send_single(SPI2, 0xFF);
-	}
-	// assert SDC
-	sdc_assert();
-
-	// software reset the SDC
-    LOGD("SDC_GO_IDLE_STATE", 0);
-	sdc_sendCommand(SDC_GO_IDLE_STATE, 0, 0, 0, 0);
-	if (sdc_getResponse(0x01))
-	{
-		return STA_NOINIT;
-	}
-	// wait for SDC to come out of idle state
-	uint8_t resp = 1;
-    LOGD("SDC_SEND_IF_COND", 0);
-   // sdc_sendCommand(SDC_SEND_OP_COND, 0, 0, 0, 0);
-   // uint8_t vv;
-
-    uint32_t if_arg = 0x1AA;
-
-    sdc_sendCommand(SDC_SEND_IF_COND, ((if_arg>>24)&0xFF), ((if_arg>>16)&0xFF), ((if_arg>>8)&0xFF), (if_arg&0xFF));
-    while(resp) {
-	//	sdc_sendCommand(SDC_SEND_OP_COND, 0, 0, 0, 0);
-		if (!sdc_getResponse(0x01))
-		{
-			resp = 0;
-		}
-	}
-    LOGD("SDC_CMD55", 0);
-    sdc_sendCommand(SDC_CMD55, 0,0,0,0);
-    for(uint8_t i = 0; i < 4; i++) {
-        LOGD("Spi response", SPI_receive_single(SPI2));
-    }
-    if_arg = 0x00000000;
-   // sdc_sendCommand(SDC_ACMD41, ((if_arg>>24)&0xFF), ((if_arg>>16)&0xFF), ((if_arg>>8)&0xFF), (if_arg&0xFF));
-   LOGD("SDC_ACMD41", 0);
-   sdc_sendCommand(SDC_ACMD41, 0,0,0,0);
-    resp = 1;
-    uint8_t rec;
-    while(resp)
-	{
-		rec = SPI_receive_single(SPI2);
-        if(rec != 0xFF) {
-            LOGD("NEW REPLY", rec);
-            resp = 0;
-        }
-
-	}
-    resp = 1;
-    if(rec == 0x05) {
-        LOGD("SDC_SEND_OP_COND", 0);
-        while(resp) {
-		    sdc_sendCommand(SDC_SEND_OP_COND, 0, 0, 0, 0);
-		    if (!sdc_getResponse(0x00))
-		    {
-			    resp = 0;
-		    }
-	    }
-    }
-   
-
-    /*
-    while(resp)
-	{
-		sdc_sendCommand(SDC_SEND_OP_COND, 0, 0, 0, 0);
-		if (!sdc_getResponse(0x00))
-		{
-			resp = 0;
-		}
-	}
-    */
-    LOGD("sdc_deassert", 0);
-	// deassert the SDC
-	sdc_deassert();
-     LOGD("sdc_deassert finished", 0);
-
-	SPI_init(SPI2, SPI_BaudRatePrescaler_32);
-    LOGD("SPI_init finised", 0);
-	return 0;
-}
-
-
-
-/*-----------------------------------------------------------------------*/
-/* Get Disk Status                                                       */
-/*-----------------------------------------------------------------------*/
-
-DSTATUS disk_status (
-	BYTE pdrv		/* Physical drive nmuber (0..) */
+	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-	unsigned char result[2];
+    uint8_t n, cmd, ty, ocr[4];;
 
-	if (!sdc_isConn())
-	{
-		return STA_NODISK;
+	if (pdrv) return STA_NOINIT;	
+
+    SPI_init(SPI_BaudRatePrescaler_256);
+    CS_init();
+    chip_deselect();
+    for (uint8_t i = 0; i < 10; i++) SPI_send_single(0xFF); /* Send 80 dummy clocks */
+    
+
+    ty = 0;
+    if (send_cmd(CMD0, 0) == 1) {			/* Put the card SPI/Idle state */
+	    systick_set_timer(1, 1000);						/* Initialization timeout = 1 sec */
+		if (send_cmd(CMD8, 0x1AA) == 1) {	/* SDv2? */
+            LOGD("Card version: SDv2", 0);
+            for (n = 0; n < 4; n++) ocr[n] = SPI_send_single(0xFF);	/* Get 32 bit return value of R7 resp */
+			if (ocr[2] == 0x01 && ocr[3] == 0xAA) {				/* Is the card supports vcc of 2.7-3.6V? */
+				while (systick_get_timer(1) && send_cmd(ACMD41, 1UL << 30)) ;	/* Wait for end of initialization with ACMD41(HCS) */
+				if (systick_get_timer(1) && send_cmd(CMD58, 0) == 0) {		/* Check CCS bit in the OCR */
+					for (n = 0; n < 4; n++) ocr[n] = SPI_send_single(0xFF);
+					ty = (ocr[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2;	/* Card id SDv2 */
+				}
+			}
+        } else {
+            LOGD("Card version: SDv1", 0);
+			if (send_cmd(ACMD41, 0) <= 1) 	{	/* SDv1 or MMC? */
+				ty = CT_SD1; cmd = ACMD41;	/* SDv1 (ACMD41(0)) */
+			} else {
+				ty = CT_MMC; cmd = CMD1;	/* MMCv3 (CMD1(0)) */
+			}
+			while (systick_get_timer(1) && send_cmd(cmd, 0)) ;		/* Wait for end of initialization */
+			if (!systick_get_timer(1) || send_cmd(CMD16, 512) != 0)	/* Set block length: 512 */
+				ty = 0;
+		}
+    }
+	CardType = ty;	/* Card type */
+	chip_deselect();
+
+	if (ty) {			/* OK */
+		SPI_BaudRate(SPI_BaudRatePrescaler_8);			/* Set fast clock */
+		Stat &= ~STA_NOINIT;	/* Clear STA_NOINIT flag */
+	} else {			/* Failed */
+		Stat = STA_NOINIT;
 	}
-	/*
-	sdc_assert();
-	sdc_sendCommand(SDC_SEND_STATUS, 0, 0, 0, 0);
-	SPI_receive(SPI1, result, 2);
-	sdc_deassert();
-	
-	if (result[0] & 0x01)
-	{
-		return STA_NOINIT; 
-	}
-	else if (result[1] & 0x01)
-	{
-		return STA_PROTECT;
-	}
-	*/
-	
-	return 0;
+
+	return Stat;
+
+
+//	return STA_NOINIT;
 }
 
 
@@ -235,58 +197,35 @@ DSTATUS disk_status (
 /*-----------------------------------------------------------------------*/
 
 DRESULT disk_read (
-	BYTE pdrv,		/* Physical drive nmuber (0..) */
+	BYTE drv,		/* Physical drive nmuber to identify the drive */
 	BYTE *buff,		/* Data buffer to store read data */
-	DWORD sector,	/* Sector address (LBA) */
-	UINT count		/* Number of sectors to read (1..128) */
+	DWORD sector,	/* Start sector in LBA */
+	UINT count		/* Number of sectors to read */
 )
 {
-	unsigned char result;
-	unsigned char buf[2];
-	
-	// check if parameters are in valid range
-	if( count > 128 )
-	{
-		return RES_PARERR;
-	}
-	
-	sector *= 512; // convert LBA to physical address
-    LOGD("disk_read start sdc assert", count);
-	sdc_assert(); // assert SDC
-	LOGD("disk_read start sdc assert finished", count);
-	// if multiple sectors are to be read
-	if(count > 1)
-	{
-		// start multiple sector read
-		sdc_sendCommand(SDC_READ_MULTIPLE_BLOCK, ((sector>>24)&0xFF), ((sector>>16)&0xFF), ((sector>>8)&0xFF), (sector&0xFF));
-		while(sdc_getResponse(0x00)); // wait for command acknowledgement
-		
-		while(count)
-		{
-			while(sdc_getResponse(0xFE)); // wait for data token 0xFE
-			SPI_receive(SPI2, buff, 512); // read 512 bytes
-			SPI_receive(SPI2, buf, 2); // receive two byte CRC
-			count--;
-			buff += 512;
+	if (drv || !count) return RES_PARERR;		/* Check parameter */
+	if (Stat & STA_NOINIT) return RES_NOTRDY;	/* Check if drive is ready */
+
+	if (!(CardType & CT_BLOCK)) sector *= 512;	/* LBA ot BA conversion (byte addressing cards) */
+
+	if (count == 1) {	/* Single sector read */
+		if ((send_cmd(CMD17, sector) == 0)	/* READ_SINGLE_BLOCK */
+			&& rcvr_datablock(buff, 512)) {
+			count = 0;
 		}
-		// stop multiple sector read
-		sdc_sendCommand(SDC_STOP_TRANSMISSION, 0, 0, 0, 0);
-		while(sdc_getResponse(0x00)); // wait for R1 response
 	}
-	else // if single sector is to be read
-	{
-		sdc_sendCommand(SDC_READ_SINGLE_BLOCK, ((sector>>24)&0xFF), ((sector>>16)&0xFF), ((sector>>8)&0xFF), (sector&0xFF));
-		while(sdc_getResponse(0x00)); // wait for command acknowledgement
-		while(sdc_getResponse(0xFE)); // wait for data token 0xFE
-		SPI_receive(SPI2, buff, 512); // receive data
-		SPI_receive(SPI2, buf, 2); // receive two byte CRC
+	else {				/* Multiple sector read */
+		if (send_cmd(CMD18, sector) == 0) {	/* READ_MULTIPLE_BLOCK */
+			do {
+				if (!rcvr_datablock(buff, 512)) break;
+				buff += 512;
+			} while (--count);
+			send_cmd(CMD12, 0);				/* STOP_TRANSMISSION */
+		}
 	}
-	
-	while(!SPI_receive_single(SPI2)); // wait until card is not busy anymore
-	
-	sdc_deassert(); // deassert SDC 
-	
-	return RES_OK;
+	chip_deselect();
+
+	return count ? RES_ERROR : RES_OK;	/* Return result */    
 }
 
 
@@ -295,86 +234,32 @@ DRESULT disk_read (
 /* Write Sector(s)                                                       */
 /*-----------------------------------------------------------------------*/
 
-#if _USE_WRITE
 DRESULT disk_write (
-	BYTE pdrv,			/* Physical drive nmuber (0..) */
-	const BYTE* buff,	/* Data to be written */
-	DWORD sector,		/* Sector address (LBA) */
-	UINT count			/* Number of sectors to write (1..128) */
+	BYTE pdrv,			/* Physical drive nmuber to identify the drive */
+	const BYTE *buff,	/* Data to be written */
+	DWORD sector,		/* Start sector in LBA */
+	UINT count			/* Number of sectors to write */
 )
 {
-	unsigned char result;
-	unsigned char buf[2];
-	buf[0] = 0xFF;
-	buf[1] = 0xFF;
-	
-	// check if parameters are in valid range
-	if( count > 128 )
-	{
-		return RES_PARERR;
-	}
-	
-	sector *= 512; // convert LBA to physical address
-	sdc_assert(); // assert SDC
-	
-	// if multiple sectors are to be written
-	if(count > 1)
-	{
-		// start multiple sector write
-		sdc_sendCommand(SDC_WRITE_MULTIPLE_BLOCK, ((sector>>24)&0xFF), ((sector>>16)&0xFF), ((sector>>8)&0xFF), (sector&0xFF));
-		while(sdc_getResponse(0x00)); // wait for R1 response
-		SPI_send_single(SPI2, 0xFF);  // send one byte gap
-		
-		while(count)
-		{
-			SPI_send_single(SPI2, 0xFC); // send multi byte data token 0xFC
-			SPI_send(SPI2, (unsigned char*)buff, 512); // send 512 bytes
-			SPI_send(SPI2, buf, 2); // send two byte CRC
-			
-			// check if card has accepted data
-			result = SPI_receive_single(SPI2);
-			if( (result & 0x1F) != 0x05)
-			{
-				return RES_ERROR;
-			}
-			count--;
-			buff += 512;
-			while(!SPI_receive_single(SPI2)); // wait until SD card is ready
-		}
-		
-		SPI_send_single(SPI2, 0xFD); // send stop transmission data token 0xFD		
-		SPI_send_single(SPI2, 0xFF);  // send one byte gap
-	}
-	else // if single sector is to be written
-	{
-		sdc_sendCommand(SDC_WRITE_BLOCK, ((sector>>24)&0xFF), ((sector>>16)&0xFF), ((sector>>8)&0xFF), (sector&0xFF));
-		while(sdc_getResponse(0x00)); // wait for R1 response
-		SPI_send_single(SPI2, 0xFF);  // send one byte gap
-		SPI_send_single(SPI2, 0xFE); // send data token 0xFE
-		SPI_send(SPI2, (unsigned char*)buff, 512); // send data
-		SPI_send(SPI2, buf, 2); // send two byte CRC
-		// check if card has accepted data
-		result = SPI_receive_single(SPI2);
-		if( (result & 0x1F) != 0x05)
-		{
-			return RES_ERROR;
-		}
-	}
-	
-	while(!SPI_receive_single(SPI2)); // wait until card is not busy anymore
-	
-	sdc_deassert(); // deassert SDC 
-	
-	return RES_OK;
+	DRESULT res;
+	int result;
+
+	//result = USB_disk_write(buff, sector, count);
+
+		// translate the reslut code here
+
+	return res;
+
+
+//	return RES_PARERR;
 }
-#endif
+
 
 
 /*-----------------------------------------------------------------------*/
 /* Miscellaneous Functions                                               */
 /*-----------------------------------------------------------------------*/
 
-#if _USE_IOCTL
 DRESULT disk_ioctl (
 	BYTE pdrv,		/* Physical drive nmuber (0..) */
 	BYTE cmd,		/* Control code */
@@ -383,10 +268,9 @@ DRESULT disk_ioctl (
 {
 	DRESULT res;
 	int result;
-	
-	return RES_OK;
+
+    return res;
 }
-#endif
 
 DWORD get_fattime (void)
 {
