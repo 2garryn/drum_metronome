@@ -112,6 +112,21 @@ static int rcvr_datablock (uint8_t *buff, uint16_t btr)		/* 1:OK, 0:Error */
 	return 1;						/* Function succeeded */
 }
 
+static uint8_t xmit_datablock(const BYTE *buff, BYTE token){
+	BYTE resp;
+	if (!wait_ready(500)) return 0;		/* Wait for card ready */
+
+	SPI_send_single(token);					/* Send token */
+	if (token != 0xFD) {				/* Send data if token is other than StopTran */
+		SPI_send(buff, 512);		/* Data */
+		SPI_send_single(0xFF); SPI_send_single(0xFF);	/* Dummy CRC */
+
+		resp = SPI_send_single(0xFF);				/* Receive data resp */
+		if ((resp & 0x1F) != 0x05) return 0;	/* Function fails if the data packet was not accepted */
+	}
+	return 1;
+}
+
 static uint8_t CardType;
 
 static volatile DSTATUS Stat = STA_NOINIT;	/* Physical drive status */
@@ -148,7 +163,6 @@ DSTATUS disk_initialize (
     chip_deselect();
     for (uint8_t i = 0; i < 10; i++) SPI_send_single(0xFF); /* Send 80 dummy clocks */
     
-
     ty = 0;
     if (send_cmd(CMD0, 0) == 1) {			/* Put the card SPI/Idle state */
 	    systick_set_timer(1, 1000);						/* Initialization timeout = 1 sec */
@@ -185,9 +199,6 @@ DSTATUS disk_initialize (
 	}
 
 	return Stat;
-
-
-//	return STA_NOINIT;
 }
 
 
@@ -235,23 +246,37 @@ DRESULT disk_read (
 /*-----------------------------------------------------------------------*/
 
 DRESULT disk_write (
-	BYTE pdrv,			/* Physical drive nmuber to identify the drive */
+	BYTE drv,			/* Physical drive nmuber to identify the drive */
 	const BYTE *buff,	/* Data to be written */
 	DWORD sector,		/* Start sector in LBA */
 	UINT count			/* Number of sectors to write */
 )
 {
-	DRESULT res;
-	int result;
+    if (drv || !count) return RES_PARERR;		/* Check parameter */
+	if (Stat & STA_NOINIT) return RES_NOTRDY;	/* Check drive status */
+	if (Stat & STA_PROTECT) return RES_WRPRT;	/* Check write protect */
 
-	//result = USB_disk_write(buff, sector, count);
+	if (!(CardType & CT_BLOCK)) sector *= 512;	/* LBA ==> BA conversion (byte addressing cards) */
+	if (count == 1) {	/* Single sector write */
+		if ((send_cmd(CMD24, sector) == 0)	/* WRITE_BLOCK */
+			&& xmit_datablock(buff, 0xFE)) {
+			count = 0;
+		}
+	}
+	else {				/* Multiple sector write */
+		if (CardType & CT_SDC) send_cmd(ACMD23, count);	/* Predefine number of sectors */
+		if (send_cmd(CMD25, sector) == 0) {	/* WRITE_MULTIPLE_BLOCK */
+			do {
+				if (!xmit_datablock(buff, 0xFC)) break;
+				buff += 512;
+			} while (--count);
+			if (!xmit_datablock(0, 0xFD)) count = 1;	/* STOP_TRAN token */
+		}
+	}
+	chip_deselect();
 
-		// translate the reslut code here
+	return count ? RES_ERROR : RES_OK;	/* Return result */
 
-	return res;
-
-
-//	return RES_PARERR;
 }
 
 
