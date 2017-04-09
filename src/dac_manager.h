@@ -16,5 +16,5 @@ void dac_disable(void);
 uint8_t dac_load_file(FIL * fil);
 uint8_t dac_loop(void);
 uint8_t dac_file_reset();
-
+void test_dac_manager(void);
 #endif /* DACMANAGER_H_INCLUDED */

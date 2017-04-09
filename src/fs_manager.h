@@ -19,6 +19,7 @@ typedef struct fsm_sample_iter {
     BOOL inited;
 } fsm_sample_iter;
 
+void fsm_sdcard_test();
 uint8_t fsm_init(void);
 
 uint8_t fsm_samples_iter_continue(fsm_sample_iter * iter, char * name);
@@ -28,7 +29,7 @@ uint8_t fsm_open_sample(char * sample_name, fsm_sample * sample);
 uint8_t fsm_close_sample(fsm_sample * sample);
 
 uint8_t fsm_seek_raw_wav(FIL * fil);
-uint8_t fsm_read_file(FIL * fil, unsigned char * buffer, uint16_t length);
+uint8_t fsm_read_file(FIL * fil, uint16_t * buffer, uint16_t length);
 
 uint8_t open_sample_files(fsm_sample *sample);
 uint8_t close_sample_files(fsm_sample *sample);

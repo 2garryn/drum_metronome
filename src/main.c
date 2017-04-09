@@ -25,21 +25,41 @@ int main(void) {
 //Wait for clock to stabilize
     while (!RCC_WaitForHSEStartUp());
     init_UART();    
-    fsm_init();
-    clt_init();
-    dac_init();
-    btn_init();
-    btn_enable();
     systick_init();
-    lcd_init();
-    main_mgr_init();
- 
+ //   fsm_sdcard_test();
+  //  fsm_init();
+  //  test_fsm();
+ //   test_dac_manager();
+ //   clt_init();
+ //  dac_init();
+    btn_init();
+  //  btn_enable();
+  //  systick_init();
+  //  lcd_init();
+  //  main_mgr_init();
+ // test_fsm();
 
+    fsm_sample sample;
+    uint8_t track[] = {
+        DOWNBEAT,
+        DOWNBEAT,
+        DOWNBEAT,
+        DOWNBEAT,
+        DOWNBEAT,
+        DOWNBEAT,
+        DOWNBEAT,
+        DOWNBEAT
+    };
+
+  //  fsm_open_sample("wav1", &sample);
+  //  bpl_start_sample(&sample, 60, &track);
+    btn_set_button_mode_multiclick(BTN_PORT_0, BTN_PORT_0_PIN_0);
+    btn_set_button_mode_long(BTN_PORT_0, BTN_PORT_0_PIN_1);
+    btn_timer_enable();
 
     while(1) {
         btn_loop();
-        bpl_loop();
-        dac_loop();
+  //     bpl_loop();
     }
   /*
     fsm_init();

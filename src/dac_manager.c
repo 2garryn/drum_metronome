@@ -1,7 +1,7 @@
 #include "dac_manager.h"   
 
                                        
-unsigned char dac_buff[512];
+uint16_t dac_buff[512];
 uint8_t loop_go = FALSE;
 FIL * current_file;
 
@@ -42,18 +42,18 @@ void dac_init(void) {
     // Init DMA 
     DMA_DeInit(DMA1_Stream5);
     DMA_INIT.DMA_Channel            = DMA_Channel_7; 
-    DMA_INIT.DMA_PeripheralBaseAddr = (uint32_t)&DAC->DHR8R1;//->DHR12R1;// &DAC->DHR12L1; DHR8R1;
+    DMA_INIT.DMA_PeripheralBaseAddr = (uint32_t)&DAC->DHR12L1;//->DHR12R1;// &DAC->DHR12L1; DHR8R1;
     DMA_INIT.DMA_Memory0BaseAddr    = (uint32_t)&dac_buff;
     DMA_INIT.DMA_DIR                = DMA_DIR_MemoryToPeripheral;
     DMA_INIT.DMA_BufferSize         = 512;
     DMA_INIT.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;
     DMA_INIT.DMA_MemoryInc          = DMA_MemoryInc_Enable;
-    DMA_INIT.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
-    DMA_INIT.DMA_MemoryDataSize     = DMA_MemoryDataSize_Byte;
+    DMA_INIT.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
+    DMA_INIT.DMA_MemoryDataSize     = DMA_MemoryDataSize_HalfWord;
     DMA_INIT.DMA_Mode               = DMA_Mode_Circular;
     DMA_INIT.DMA_Priority           = DMA_Priority_High;
     DMA_INIT.DMA_FIFOMode           = DMA_FIFOMode_Disable;         
-    DMA_INIT.DMA_FIFOThreshold      = DMA_FIFOThreshold_HalfFull;
+   // DMA_INIT.DMA_FIFOThreshold      = DMA_FIFOThreshold_HalfFull;
     DMA_INIT.DMA_MemoryBurst        = DMA_MemoryBurst_Single;
     DMA_INIT.DMA_PeripheralBurst    = DMA_PeripheralBurst_Single;
     DMA_Init(DMA1_Stream5, &DMA_INIT);
@@ -75,16 +75,18 @@ void dac_disable(void) {
 }
 
 void dac_timer_enable() {
-    fsm_read_file(current_file, &dac_buff[0], 512);
+ //   fsm_read_file(current_file, &dac_buff[0], 512);
     loop_go = TRUE;
+  //  LOGD("DAC TIMER ENABLE", 0);
     // TODO: How does it affect sound signal form?
-    DMA_SetCurrDataCounter(DMA1_Stream5, 512);
+  //  DMA_SetCurrDataCounter(DMA1_Stream5, );
     TIM_Cmd(TIM6, ENABLE);
 }
 
 void dac_timer_disable() {
     loop_go = FALSE;
     TIM_Cmd(TIM6, DISABLE);
+  //      dac_file_reset();
 }
 
 uint8_t dac_file_reset() {
@@ -96,10 +98,11 @@ uint8_t dac_file_reset() {
 }
 
 uint8_t dac_load_file(FIL * fil) {
-    LOGD("dac_play", 0);
+   // LOGD("dac_play", 0);
     uint8_t result;
     current_file = fil;
-    if(fsm_seek_raw_wav(fil)) {          
+    if(fsm_seek_raw_wav(fil)) {       
+        LOGD("SEEK FILE ERROR", 0);
         return RET_ERROR;
     };
     result = fsm_read_file(fil, &dac_buff[0], 512);
@@ -136,7 +139,7 @@ void test_dac_manager(void){
     fsm_sample sample;
     fsm_init();
     dac_init();
-    fsm_open_sample("sine", &sample);
+    fsm_open_sample("wav1", &sample);
     dac_enable();
     dac_load_file(&(sample.downbeat_fil));
     uint8_t res = RET_OK;
@@ -148,7 +151,7 @@ void test_dac_manager(void){
         }
     }
     dac_timer_disable();
-    dac_load_file(&(sample.offbeat_fil));;
+    dac_load_file(&(sample.offbeat_fil));
     res = RET_OK;
     dac_timer_enable();
     while(1) {
@@ -162,8 +165,8 @@ void test_dac_manager(void){
     fsm_close_sample(&sample);
 
 }
-
- /*
+/*
+ 
 int wave_playback(const char *FileName)
 {
   FRESULT res;                                //для возвращаемого функциями результата
@@ -225,8 +228,8 @@ int wave_playback(const char *FileName)
   return 0;                                   //успешное завершение ф-ии
 }
 
-
-
+*/
+/*
 unsigned char i=0;
 int first = 0;
 int second = 0;
@@ -313,6 +316,7 @@ int init2(void) {
     return 0;   
     
 }
+/*
 
 void TIM6_DAC_IRQHandler(void) {
   //print_UART("Interrupt\n");
@@ -332,14 +336,14 @@ void TIM6_DAC_IRQHandler(void) {
 }
 
 
+*/
 
 
 
 
 
 
-
-
+/*
 
 
 void test_dac_manager1(void){

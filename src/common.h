@@ -1,4 +1,5 @@
-
+#ifndef COMMON_H_INCLUDED
+#define COMMON_H_INCLUDED
 // RETURNS
 #define RET_OK 0
 
@@ -11,7 +12,7 @@
 #define RET_FILE_FINISHED 4
 
 // BOOLEAN
-typedef int8_t BOOL;
+typedef unsigned char BOOL;
 
 #define TRUE 1
 
@@ -19,9 +20,9 @@ typedef int8_t BOOL;
 
 // SET/RESET state
 
-#define SET 1
+#define SET_STATE 1
 
-#define RESET 0
+#define RESET_STATE 0
 
 //BEATS INDEX FOR TRACK
 
@@ -35,10 +36,19 @@ typedef int8_t BOOL;
 
 #define MIN_BPM 30
 
-// RHYTM NOTES
-#define QUARTER_NOTE 0
+//RHYTM NOTE PATTERNS
 
-#define EIGHTH_NOTE 1
+#define  QUARTER_NOTE 0x01
 
-#define SiXTEENTH_NOTE 2 
+#define EIGHTH_NOTE 0x03
 
+#define SiXTEENTH_NOTE 0x0F
+
+#define SiXTEENTH_NOTE_1_1_0 0x0E
+
+#define SiXTEENTH_NOTE_1_0_1 0x0D
+
+#define SiXTEENTH_NOTE_0_1_1 0x0B
+
+
+#endif
