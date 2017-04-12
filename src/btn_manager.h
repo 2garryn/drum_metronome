@@ -18,9 +18,10 @@ void btn_init_port_pins(GPIO_TypeDef* GpioPort, uint32_t RCClocking, uint32_t pi
 void btn_timer_enable(void);
 void btn_timer_disable(void);
 void btn_loop(void);
-void set_button_mode_simple(GPIO_TypeDef* port, uint16_t pin);
-void set_button_mode_long(GPIO_TypeDef* port, uint16_t pin);
-void set_button_mode_multiclick(GPIO_TypeDef* port, uint16_t pin);
+void btn_set_button_mode_simple(GPIO_TypeDef* port, uint16_t pin);
+void btn_set_button_mode_long(GPIO_TypeDef* port, uint16_t pin);
+void btn_set_button_mode_multiclick(GPIO_TypeDef* port, uint16_t pin);
+void btn_set_button_mode(GPIO_TypeDef* port, uint16_t pin, uint8_t mode);
 
 void btn_callback_clicked_0_0(uint8_t event);
 void btn_callback_clicked_0_1(uint8_t event);

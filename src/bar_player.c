@@ -14,6 +14,13 @@ static uint8_t get_offbeat_volume();
 static uint8_t get_downbeat_volume();
 static uint8_t get_subnote_volume();
 
+
+
+/*
+bpm: tempo,
+track: track number: 1 - 9,
+note_pattern: actual note
+*/
 uint8_t bpl_start_sample(fsm_sample * sample,  uint16_t bpm, uint8_t track, uint8_t note_pattern, uint16_t n_notes) {
     uint16_t bpm_interval = calculate_interval(bpm, note_pattern);
     n_notes_counter = n_notes;

@@ -35,8 +35,8 @@ int main(void) {
     btn_init();
   //  btn_enable();
   //  systick_init();
-  //  lcd_init();
-  //  main_mgr_init();
+    lcd_init();
+    main_mgr_init();
  // test_fsm();
 
     fsm_sample sample;
@@ -53,9 +53,9 @@ int main(void) {
 
   //  fsm_open_sample("wav1", &sample);
   //  bpl_start_sample(&sample, 60, &track);
-    btn_set_button_mode_multiclick(BTN_PORT_0, BTN_PORT_0_PIN_0);
-    btn_set_button_mode_long(BTN_PORT_0, BTN_PORT_0_PIN_1);
-    btn_timer_enable();
+ //   btn_set_button_mode_multiclick(BTN_PORT_0, BTN_PORT_0_PIN_0);
+ //   btn_set_button_mode_long(BTN_PORT_0, BTN_PORT_0_PIN_1);
+ //   btn_timer_enable();
 
     while(1) {
         btn_loop();

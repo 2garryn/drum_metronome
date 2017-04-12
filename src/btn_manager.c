@@ -43,18 +43,18 @@ typedef struct stack_event_st {
 static uint8_t get_current_pressed();
 static void process_timer();
 static void btn_timer_init();
-static void set_button_mode(GPIO_TypeDef* port, uint16_t pin, uint8_t mode);
+
 static void set_button_mode_do(port_mode_st* port_modes, uint8_t port_length, uint16_t pin, uint8_t mode);
 static uint8_t get_button_mode_do(port_mode_st* port_modes, uint8_t port_length, uint16_t pin);
 static void continue_process_simple_mode();
 static void continue_process_long_mode();
 static void continue_process_multiclick_mode();
-static uint8_t is_button_pressed(volatile GPIO_TypeDef* port, volatile uint16_t pin);
+static uint8_t is_button_pressed(GPIO_TypeDef* volatile port, volatile uint16_t pin);
 static void reset_button_processing();
 static uint8_t push_to_queue(stack_event_st st);
 static uint8_t pop_from_queue(stack_event_st * st);
 static void process_events_from_queue();
-static void send_event(uint8_t event, GPIO_TypeDef* port, uint16_t pin);
+static void send_event(uint8_t event, GPIO_TypeDef* volatile port, volatile uint16_t pin);
 
 struct port_mode_st port0_modes[] = {
     {BTN_PORT_0_PIN_0, SIMPLE_MODE},
@@ -120,13 +120,13 @@ void btn_init_port_pins(GPIO_TypeDef* GpioPort, uint32_t RCClocking, uint32_t pi
 
 
 void btn_set_button_mode_simple(GPIO_TypeDef* port, uint16_t pin) {
-    set_button_mode(port, pin, SIMPLE_MODE);
+    btn_set_button_mode(port, pin, SIMPLE_MODE);
 };
 void btn_set_button_mode_multiclick(GPIO_TypeDef* port, uint16_t pin) {
-    set_button_mode(port, pin, MULTICLICK_MODE);
+    btn_set_button_mode(port, pin, MULTICLICK_MODE);
 };
 void btn_set_button_mode_long(GPIO_TypeDef* port, uint16_t pin) {
-    set_button_mode(port, pin, LONG_MODE);
+    btn_set_button_mode(port, pin, LONG_MODE);
 };
 
 void btn_timer_enable() {
@@ -137,7 +137,7 @@ void btn_timer_disable() {
     TIM_Cmd(TIM3, DISABLE);
 }
 
-void set_button_mode(GPIO_TypeDef* port, uint16_t pin, uint8_t mode) {
+void btn_set_button_mode(GPIO_TypeDef* port, uint16_t pin, uint8_t mode) {
     if(port == BTN_PORT_0) {
         set_button_mode_do(port0_modes, 4, pin, mode);
     } else if(port == BTN_PORT_1) {
@@ -146,7 +146,9 @@ void set_button_mode(GPIO_TypeDef* port, uint16_t pin, uint8_t mode) {
 }
 
 void set_button_mode_do(port_mode_st* port_modes, uint8_t port_length, uint16_t pin, uint8_t mode) {
+    LOGD("Needed Pin:: ", pin);
     for(uint8_t i = 0; i < port_length; i++) {
+        LOGD("For Pin:: ", port_modes[i].pin);
         if(port_modes[i].pin == pin) {
            port_modes[i].mode = mode; 
         }
@@ -200,7 +202,7 @@ void TIM3_IRQHandler(void) {
 }
 
 
-volatile GPIO_TypeDef* current_port;
+GPIO_TypeDef* volatile current_port;
 volatile uint16_t current_pin;
 volatile uint8_t current_mode;
 volatile uint8_t is_button_processing;
@@ -341,13 +343,13 @@ void reset_button_processing() {
     is_button_processing = FALSE;
 }
 
-uint8_t is_button_pressed(volatile GPIO_TypeDef* port, volatile uint16_t pin) {
+uint8_t is_button_pressed(GPIO_TypeDef*  volatile port, volatile uint16_t pin) {
     uint16_t port_result = ~(GPIO_ReadInputData(port));
     if(port_result & pin) return TRUE;
     return FALSE;
 }
 
-void send_event(uint8_t event, GPIO_TypeDef* port, uint16_t pin) {
+void send_event(uint8_t event, GPIO_TypeDef* volatile port, volatile uint16_t pin) {
     struct stack_event_st st;
     st.event = event;
     st.port = port;
