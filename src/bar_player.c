@@ -28,7 +28,8 @@ uint8_t bpl_start_sample(fsm_sample * sample,  uint16_t bpm, uint8_t track, uint
     n_notes_counter = n_notes;
     current_track_counter = 0;
     given_track = track;
-    given_pattern = current_pattern = note_pattern;
+    given_pattern = note_pattern;
+    current_pattern = 1;
     current_sample = sample;
     clt_ms_trigger_clear();
     clt_ms_trigger_interval_set(bpm_interval);
@@ -81,6 +82,7 @@ uint8_t is_play_subnote() {
         current_pattern = given_pattern;
         return FALSE;
     };
+
     if(current_pattern & 1) {
         play_sample_dac(current_sample, OFFBEAT, get_subnote_volume());
     };
