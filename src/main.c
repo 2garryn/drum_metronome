@@ -30,11 +30,9 @@ int main(void) {
   //  fsm_init();
   //  test_fsm();
  //   test_dac_manager();
- //   clt_init();
- //  dac_init();
+    clt_init();
+    dac_init();
     btn_init();
-  //  btn_enable();
-  //  systick_init();
     lcd_init();
     main_mgr_init();
  // test_fsm();
@@ -59,7 +57,7 @@ int main(void) {
 
     while(1) {
         btn_loop();
-  //     bpl_loop();
+        bpl_loop();
     }
   /*
     fsm_init();

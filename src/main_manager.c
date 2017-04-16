@@ -5,8 +5,8 @@ static void main_mgr_main_page_next_key(uint8_t event);
 static void main_mgr_main_page_prev_key(uint8_t event);
 
 
-static uint8_t start_stop;
-static uint16_t current_bpm = 220;
+static uint8_t start_stop = 0;
+static uint16_t current_bpm = 100;
 static uint8_t current_note = QUARTER_NOTE;
 
 void main_mgr_init() {
@@ -40,17 +40,18 @@ void main_mgr_prev_key(uint8_t event) {
 void main_mgr_start_stop_key(uint8_t event) {
     if(event == KEY_DOWN) {
         if(start_stop)  {
-    //      bpl_stop_sample();
             start_stop = 0;
+            stop_play();
         } else {
-        //    bpl_start_sample(sample, current_bpm, current_note);
             start_stop = 1;
+            start_play();    
         }
     }
 }
 
 void main_mgr_select_note_key(uint8_t event) {
     if(event == KEY_DOWN) {
+        stop_play();
         switch (current_note) {
             case QUARTER_NOTE:
                 current_note = EIGHTH_NOTE;
@@ -65,14 +66,18 @@ void main_mgr_select_note_key(uint8_t event) {
         LOGD("Current note: ", current_note);
         lcd_set_note(current_note);
     }
+    if(event == KEY_UP_CLICK) {
+        start_play();
+        return;
+    }
 }
 
 void main_mgr_main_page_next_key(uint8_t event) {
     if(event == KEY_DOWN) {
-        // bpl_stop_sample();
+        stop_play();
     }
     if(event == KEY_UP_CLICK) {
-        //      bpl_start_sample(sample, current_bpm, current_note);
+        start_play();
         return;
     }
     main_mgr_increment_current_bpm(1);
@@ -82,10 +87,10 @@ void main_mgr_main_page_next_key(uint8_t event) {
 
 void main_mgr_main_page_prev_key(uint8_t event) {
     if(event == KEY_DOWN) {
-        // bpl_stop_sample();
+        stop_play();
     }
     if(event == KEY_UP_CLICK) {
-        //      bpl_start_sample(sample, current_bpm, current_note);
+        start_play();
         return;
     }
     main_mgr_decrement_current_bpm(1);
@@ -111,4 +116,14 @@ void main_mgr_decrement_current_bpm(uint8_t decr) {
     } else {
         current_bpm -= decr;
     }
+}
+
+void start_play() {
+    if(start_stop) {
+        bpl_start_sample(0, current_bpm, 4, current_note, 0);
+    }
+}
+
+void stop_play() {
+    bpl_stop_sample();
 }
