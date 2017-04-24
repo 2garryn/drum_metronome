@@ -12,4 +12,6 @@ void lcd_main_page_set_bpm(uint16_t bpm);
 
 void lcd_main_page_set_note(uint8_t note);
 
+void lcd_main_page_set_track(uint8_t track);
+
 #endif

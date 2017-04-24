@@ -8,11 +8,14 @@ static void main_mgr_main_page_prev_key(uint8_t event);
 static uint8_t start_stop = 0;
 static uint16_t current_bpm = 100;
 static uint8_t current_note = QUARTER_NOTE;
+static uint8_t current_track = 4;
+
 
 void main_mgr_init() {
     lcd_set_current_page(MAIN_PAGE);
     lcd_set_bpm(current_bpm);
     lcd_set_note(current_note);
+    lcd_set_track(current_track);
 //    fsm_open_sample("frank", &sample);
     btn_callback_set_mode_next_key(MULTICLICK_MODE);
     btn_callback_set_mode_prev_key(MULTICLICK_MODE);
@@ -72,6 +75,22 @@ void main_mgr_select_note_key(uint8_t event) {
     }
 }
 
+void main_mgr_select_track_key(uint8_t event) {
+    if(event == KEY_DOWN) {
+        stop_play();
+        if(current_track == 9) {
+            current_track = 0;
+        } else {
+            current_track++;
+        }
+        lcd_set_track(current_track);
+    }
+    if(event == KEY_UP_CLICK) {
+        start_play();
+        return;
+    }
+}        
+
 void main_mgr_main_page_next_key(uint8_t event) {
     if(event == KEY_DOWN) {
         stop_play();
@@ -120,7 +139,7 @@ void main_mgr_decrement_current_bpm(uint8_t decr) {
 
 void start_play() {
     if(start_stop) {
-        bpl_start_sample(0, current_bpm, 4, current_note, 0);
+        bpl_start_sample(0, current_bpm, current_track, current_note, 0);
     }
 }
 

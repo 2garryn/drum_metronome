@@ -18,6 +18,7 @@ void btn_callback_clicked_0_3(uint8_t event) {
 }
 void btn_callback_clicked_1_0(uint8_t event) {
     LOGD("Clicked 1 - 0", event);
+    main_mgr_select_track_key(event);
 }
 void btn_callback_clicked_1_1(uint8_t event) {
     LOGD("Clicked 1 - 1", event);
@@ -43,4 +44,8 @@ void btn_callback_set_mode_start_stop_key(uint8_t mode) {
 
 void btn_callback_set_mode_select_note_key(uint8_t mode) {
     btn_set_button_mode(BTN_PORT_0, BTN_PORT_0_PIN_3, mode);
+}
+
+void btn_callback_set_mode_select_track_key(uint8_t mode) {
+    btn_set_button_mode(BTN_PORT_1, BTN_PORT_1_PIN_0, mode);
 }

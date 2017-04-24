@@ -10,6 +10,7 @@ void main_mgr_next_key(uint8_t event);
 void main_mgr_prev_key(uint8_t event);
 void main_mgr_start_stop_key(uint8_t event);
 void main_mgr_select_note_key(uint8_t event);
+void main_mgr_select_track_key(uint8_t event);
 void main_mgr_increment_current_bpm(uint8_t incr);
 void main_mgr_decrement_current_bpm(uint8_t decr);
 
