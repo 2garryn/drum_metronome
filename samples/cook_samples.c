@@ -37,7 +37,7 @@ void write_sample_name(FILE *fp, char * name, uint8_t id) {
 
 void write_sample(FILE *fp, struct Sample * sm, uint8_t id) {
     fseek(fp, sizeof(uint8_t) + 
-              ((sizeof(char) * 9) * 9) + 
+              ((sizeof(char) * 9) * MAX_SAMPLES) + 
               (sizeof(struct Sample) * id), 
           SEEK_SET);
     fwrite(sm, sizeof(struct Sample), 1, fp);
@@ -87,16 +87,20 @@ void proc_dir_to_file(FILE * res_file, int id, char * sample_name) {
     strcat(offbeat_filename, "offbeat.wav");
 
     write_samples_amount(res_file, id + 1);
+    sample_name[8] = '\0';
     write_sample_name(res_file, sample_name, id);
     fseek(res_file, 0, SEEK_END);
     printf("Id: %d, Name: %s, Downbeat: %s, Offbeat: %s \n", id, sample_name, downbeat_filename, offbeat_filename);
     sample.downb_start = ftell(res_file);
     copy_sample_data(downbeat_filename, res_file);
-    sample.downb_size = sample.downb_start - ftell(res_file);
+    sample.downb_size = ftell(res_file) - sample.downb_start;
     sample.offb_start = ftell(res_file);
     copy_sample_data(offbeat_filename, res_file);
-    sample.offb_size  = sample.offb_start - ftell(res_file);
+    sample.offb_size  = ftell(res_file) - sample.offb_start;
     write_sample(res_file, &sample, id);
+    printf("Downbeat size: %lu, Offbeat size: %lu\n", sample.downb_size, sample.offb_size);
+
+
 }
 
 void create_wav_path(char * filename, char * sample_name) {
