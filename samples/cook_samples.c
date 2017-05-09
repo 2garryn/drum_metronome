@@ -98,7 +98,7 @@ void proc_dir_to_file(FILE * res_file, int id, char * sample_name) {
     copy_sample_data(offbeat_filename, res_file);
     sample.offb_size  = ftell(res_file) - sample.offb_start;
     write_sample(res_file, &sample, id);
-    printf("Downbeat size: %lu, Offbeat size: %lu\n", sample.downb_size, sample.offb_size);
+    printf("Downbeat size: %d, Offbeat size: %d\n", sample.downb_size, sample.offb_size);
 
 
 }
@@ -116,11 +116,13 @@ void copy_sample_data(char * filename, FILE * fp) {
     uint8_t buf = 0;
     fseek(sf, 0x2C, SEEK_SET);
     while(1) {
-        fread(&buf, 1, 1, sf);
-        fwrite(&buf, 1, 1, fp);
         if(feof(sf)) {
             break;
         }
+        if(fread(&buf, 1, 1, sf) == 0) {
+            break;
+        }
+        fwrite(&buf, 1, 1, fp);
     }
 }
 
