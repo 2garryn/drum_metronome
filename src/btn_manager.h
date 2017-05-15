@@ -29,9 +29,9 @@ void btn_callback_clicked_0_2(uint8_t event);
 void btn_callback_clicked_0_3(uint8_t event);
 
 void btn_callback_clicked_1_0(uint8_t event);
-void btn_callback_clicked_2_1(uint8_t event);
-void btn_callback_clicked_3_2(uint8_t event);
-void btn_callback_clicked_4_3(uint8_t event);
+void btn_callback_clicked_1_1(uint8_t event);
+void btn_callback_clicked_1_2(uint8_t event);
+void btn_callback_clicked_1_3(uint8_t event);
 
 #define BTN_PORT_0 GPIOC
 #define BTN_PORT_0_RCC RCC_AHB1Periph_GPIOC

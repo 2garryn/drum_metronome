@@ -3,6 +3,7 @@
 
 #include "lcd_5110_imp.h"
 #include "lcd_5110_fonts.h"
+#include "uart_manager.h"
 
 
 void lcd_main_page_init_imp();

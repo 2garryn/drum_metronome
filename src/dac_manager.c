@@ -1,10 +1,9 @@
 #include "dac_manager.h"   
 
+static uint8_t copy_data(uint8_t id, uint8_t beat, uint8_t volume, uint16_t * buffer, uint16_t copy_size);
                                        
 uint16_t dac_buff[512];
 uint8_t loop_go = FALSE;
-FIL * current_file;
-
 
 void dac_init(void) {
     LOGD("dac_init", 0);
@@ -74,6 +73,75 @@ void dac_disable(void) {
     DMA_Cmd(DMA1_Stream5, DISABLE);
 }
 
+uint32_t copied_size = 0;
+uint8_t current_beat;
+uint8_t current_sample_id;
+uint8_t current_volume;
+
+void dac_play_sample(uint8_t id, uint8_t beat, uint8_t volume) {
+    TIM_Cmd(TIM6, DISABLE);
+    loop_go = FALSE;
+    DMA_SetCurrDataCounter(DMA1_Stream5, 512);
+    copied_size = 0;
+    current_beat = beat;
+    current_sample_id = id;
+    current_volume = volume;
+    copy_data(id, beat, volume, dac_buff, 512);
+    TIM_Cmd(TIM6, ENABLE);
+    loop_go = TRUE;
+}
+
+
+
+uint8_t copy_data(uint8_t id, uint8_t beat, uint8_t volume, uint16_t * buffer, uint16_t copy_size) {
+    uint32_t start_offset;
+    uint32_t sample_size;
+    uint16_t i = 0;
+    if(DOWNBEAT) {
+        ifl_downbeat_pos(id, &start_offset, &sample_size);
+    } else {
+        ifl_offbeat_pos(id, &start_offset, &sample_size);
+    };
+    start_offset += copied_size;
+    for(; i <= copy_size; i++) {
+        buffer[i] = *(uint16_t *)(start_offset + i) + 32768;
+        copied_size += 1;
+        if(copied_size >= sample_size) {
+            for(; i <= copy_size; i++) {
+                buffer[i] = 32768;
+            }
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+
+void dac_loop(void) {
+    uint8_t res;
+    if(!loop_go) return;
+    if(DMA1->HISR & DMA_HISR_HTIF5) {
+        res = copy_data(current_sample_id, current_beat, current_volume, &dac_buff[0], 256);
+        DMA1->HIFCR |= DMA_HIFCR_CHTIF5;
+        if(res) {
+            loop_go = FALSE;
+            TIM_Cmd(TIM6, DISABLE);
+            return;
+        }
+    }
+    if(DMA1->HISR & DMA_HISR_TCIF5) {
+        res = copy_data(current_sample_id, current_beat, current_volume, &dac_buff[256], 256);
+        DMA1->HIFCR |= DMA_HIFCR_CTCIF5;
+        if(res) {
+            loop_go = FALSE;
+            TIM_Cmd(TIM6, DISABLE);
+            return;
+        }
+    }
+}
+
+/*
+
 void dac_timer_enable() {
  //   fsm_read_file(current_file, &dac_buff[0], 512);
     loop_go = TRUE;
@@ -134,7 +202,6 @@ uint8_t dac_loop(void) {
 
 
 
-
 void test_dac_manager(void){
     fsm_sample sample;
     fsm_init();
@@ -165,7 +232,7 @@ void test_dac_manager(void){
     fsm_close_sample(&sample);
 
 }
-/*
+
  
 int wave_playback(const char *FileName)
 {
@@ -316,7 +383,7 @@ int init2(void) {
     return 0;   
     
 }
-/*
+
 
 void TIM6_DAC_IRQHandler(void) {
   //print_UART("Interrupt\n");

@@ -4,6 +4,8 @@
 #include "lcd_manager.h"
 #include "btn_callback.h"
 #include "common.h"
+#include "ifl_manager.h"
+#include "bar_player.h"
 
 void main_mgr_init();
 void main_mgr_next_key(uint8_t event);

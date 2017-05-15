@@ -1,7 +1,7 @@
-#include "fs_manager.h"
+//#include "fs_manager.h"
 #include "uart_manager.h"
 #include "dac_manager.h"
-#include "fs_manager.h"
+// #include "fs_manager.h"
 #include "btn_manager.h"
 #include "clock_timer.h"
 #include "bar_player.h"
@@ -35,19 +35,9 @@ int main(void) {
     btn_init();
     lcd_init();
     main_mgr_init();
+    dac_enable();
  // test_fsm();
 
-    fsm_sample sample;
-    uint8_t track[] = {
-        DOWNBEAT,
-        DOWNBEAT,
-        DOWNBEAT,
-        DOWNBEAT,
-        DOWNBEAT,
-        DOWNBEAT,
-        DOWNBEAT,
-        DOWNBEAT
-    };
 
   //  fsm_open_sample("wav1", &sample);
   //  bpl_start_sample(&sample, 60, &track);

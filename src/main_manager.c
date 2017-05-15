@@ -3,7 +3,8 @@
 //fsm_sample sample;
 static void main_mgr_main_page_next_key(uint8_t event);
 static void main_mgr_main_page_prev_key(uint8_t event);
-
+static void start_play();
+static void stop_play();
 
 static uint8_t start_stop = 0;
 static uint16_t current_bpm = 100;
@@ -42,6 +43,15 @@ void main_mgr_prev_key(uint8_t event) {
 
 void main_mgr_start_stop_key(uint8_t event) {
     if(event == KEY_DOWN) {
+        uint8_t c = ifl_samples_count();
+        LOGD("Samples count", c);
+        char ss[9];
+        ifl_id2name(0, ss);
+        LOGD(ss, 0);
+        uint32_t st, sz;
+        ifl_offbeat_pos(1, &st, &sz);
+        LOGD("Size::", sz);
+
         if(start_stop)  {
             start_stop = 0;
             stop_play();

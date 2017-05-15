@@ -3,7 +3,7 @@
 
 #include <stm32f4xx.h>
 #include "uart_manager.h"
-#include "fs_manager.h"
+#include "ifl_manager.h"
 /*
 
 void test_dac_manager1(void);
@@ -13,8 +13,8 @@ void test_dac_manager(void);
 void dac_init(void);
 void dac_enable(void);
 void dac_disable(void);
-uint8_t dac_load_file(FIL * fil);
-uint8_t dac_loop(void);
-uint8_t dac_file_reset();
-void test_dac_manager(void);
+void dac_play_sample(uint8_t id, uint8_t beat, uint8_t volume);
+
+void dac_loop(void);
+
 #endif /* DACMANAGER_H_INCLUDED */

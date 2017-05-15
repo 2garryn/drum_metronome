@@ -162,6 +162,7 @@ uint8_t get_button_mode(volatile GPIO_TypeDef* port, volatile uint16_t pin) {
     if(port == BTN_PORT_1) {
         return get_button_mode_do(port1_modes, 4, pin);
     }
+    return SIMPLE_MODE;
 }
 
 uint8_t get_button_mode_do(port_mode_st* port_modes, uint8_t port_length, volatile uint16_t pin) {
@@ -170,6 +171,7 @@ uint8_t get_button_mode_do(port_mode_st* port_modes, uint8_t port_length, volati
            return port_modes[i].mode;
         }
     }
+    return SIMPLE_MODE;
 }
 
 void btn_loop() {
