@@ -148,8 +148,9 @@ void main_mgr_decrement_current_bpm(uint8_t decr) {
 }
 
 void start_play() {
+    
     if(start_stop) {
-        bpl_start_sample(0, current_bpm, current_track, current_note, 0);
+        bpl_start_sample(2, current_bpm, current_track, current_note, 0);
     }
 }
 

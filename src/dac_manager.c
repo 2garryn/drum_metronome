@@ -73,20 +73,22 @@ void dac_disable(void) {
     DMA_Cmd(DMA1_Stream5, DISABLE);
 }
 
-uint32_t copied_size = 0;
+uint32_t copied_size_bytes = 0;
 uint8_t current_beat;
 uint8_t current_sample_id;
 uint8_t current_volume;
 
 void dac_play_sample(uint8_t id, uint8_t beat, uint8_t volume) {
+   // LOGD("dac_play_sample1", beat);
     TIM_Cmd(TIM6, DISABLE);
     loop_go = FALSE;
     DMA_SetCurrDataCounter(DMA1_Stream5, 512);
-    copied_size = 0;
+    copied_size_bytes = 0;
     current_beat = beat;
     current_sample_id = id;
     current_volume = volume;
     copy_data(id, beat, volume, dac_buff, 512);
+ //   LOGE("dac_play_sample2", id);
     TIM_Cmd(TIM6, ENABLE);
     loop_go = TRUE;
 }
@@ -97,17 +99,20 @@ uint8_t copy_data(uint8_t id, uint8_t beat, uint8_t volume, uint16_t * buffer, u
     uint32_t start_offset;
     uint32_t sample_size;
     uint16_t i = 0;
-    if(DOWNBEAT) {
+    if(beat == DOWNBEAT) {
         ifl_downbeat_pos(id, &start_offset, &sample_size);
     } else {
         ifl_offbeat_pos(id, &start_offset, &sample_size);
     };
-    start_offset += copied_size;
-    for(; i <= copy_size; i++) {
-        buffer[i] = *(uint16_t *)(start_offset + i) + 32768;
-        copied_size += 1;
-        if(copied_size >= sample_size) {
-            for(; i <= copy_size; i++) {
+  //  LOGD("Sample size", start_offset);
+    start_offset += copied_size_bytes;
+    for(i = 0; i < copy_size; i++) {
+        buffer[i] = *(uint16_t *)(start_offset + i * 2);
+        buffer[i] += 32768;
+        copied_size_bytes += 2;
+    //    LOGD("Buffe vaue", buffer[i]);
+        if(copied_size_bytes >= sample_size) {
+            for(i = 0; i <= copy_size; i++) {
                 buffer[i] = 32768;
             }
             return TRUE;
@@ -120,6 +125,7 @@ uint8_t copy_data(uint8_t id, uint8_t beat, uint8_t volume, uint16_t * buffer, u
 void dac_loop(void) {
     uint8_t res;
     if(!loop_go) return;
+  //  LOGD("DAC LOOP", 0);
     if(DMA1->HISR & DMA_HISR_HTIF5) {
         res = copy_data(current_sample_id, current_beat, current_volume, &dac_buff[0], 256);
         DMA1->HIFCR |= DMA_HIFCR_CHTIF5;
