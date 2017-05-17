@@ -82,7 +82,9 @@ void dac_play_sample(uint8_t id, uint8_t beat, uint8_t volume) {
    // LOGD("dac_play_sample1", beat);
     TIM_Cmd(TIM6, DISABLE);
     loop_go = FALSE;
+    DMA_Cmd(DMA1_Stream5, DISABLE);
     DMA_SetCurrDataCounter(DMA1_Stream5, 512);
+    DMA_Cmd(DMA1_Stream5, ENABLE);
     copied_size_bytes = 0;
     current_beat = beat;
     current_sample_id = id;
@@ -104,7 +106,6 @@ uint8_t copy_data(uint8_t id, uint8_t beat, uint8_t volume, uint16_t * buffer, u
     } else {
         ifl_offbeat_pos(id, &start_offset, &sample_size);
     };
-  //  LOGD("Sample size", start_offset);
     start_offset += copied_size_bytes;
     for(i = 0; i < copy_size; i++) {
         buffer[i] = *(uint16_t *)(start_offset + i * 2);
