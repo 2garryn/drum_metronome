@@ -83,9 +83,7 @@ void btn_timer_init(void) {
     TIM_TimeBaseInitTypeDef TIM3_TimeBase;
     NVIC_InitTypeDef nvicStructure;
 
-    TIM_TimeBaseStructInit(&TIM3_TimeBase); 
-  //  TIM3_TimeBase.TIM_Period        = 50000 - 1;         
-  //  TIM3_TimeBase.TIM_Prescaler     = 336 - 1;       
+    TIM_TimeBaseStructInit(&TIM3_TimeBase);    
     TIM3_TimeBase.TIM_Period = 84 - 1; // 1 Mhz  
     TIM3_TimeBase.TIM_Prescaler = 1000 - 1 ;
     TIM3_TimeBase.TIM_ClockDivision = 0;  
@@ -146,9 +144,7 @@ void btn_set_button_mode(GPIO_TypeDef* port, uint16_t pin, uint8_t mode) {
 }
 
 void set_button_mode_do(port_mode_st* port_modes, uint8_t port_length, uint16_t pin, uint8_t mode) {
-    LOGD("Needed Pin:: ", pin);
     for(uint8_t i = 0; i < port_length; i++) {
-        LOGD("For Pin:: ", port_modes[i].pin);
         if(port_modes[i].pin == pin) {
            port_modes[i].mode = mode; 
         }
@@ -310,7 +306,6 @@ void continue_process_long_mode() {
 volatile uint16_t multiclick_first_delay_counter = 0;
 volatile uint16_t multiclick_interval_counter = 0;
 volatile uint8_t multiclick_keyup_interval_counter = 0;
-//uint8_t multiclick_first_delay_passed = FALSE;
 
 void continue_process_multiclick_mode() {
     if(is_button_pressed(current_port, current_pin) == TRUE) {
@@ -341,7 +336,6 @@ void continue_process_multiclick_mode() {
 }
 
 void reset_button_processing() {
-    LOGD("Reset button processing", 0);
     is_button_processing = FALSE;
 }
 
@@ -377,7 +371,6 @@ uint8_t push_to_queue(stack_event_st st) {
     }
     events_stack[write_pos] = st;
     write_pos = next_write_pos;
- //   LOGD("Write pos", write_pos);
     return TRUE;
 }
 
@@ -392,6 +385,5 @@ uint8_t pop_from_queue(stack_event_st * st) {
     }
     *st = events_stack[read_pos];
     read_pos = next_read_pos;
-  //  LOGD("Read pos", read_pos);
     return TRUE;
 }

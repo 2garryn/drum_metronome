@@ -46,11 +46,9 @@ SRC+=system_stm32f4xx.c
 SRC+=syscalls.c
 
 SRC+=main.c
-# SRC+=fs_manager.c
 SRC+=uart_manager.c
 SRC+=dac_manager.c
 SRC+=ifl_manager.c
-# SRC+=dac_test_demo.c
 SRC+=clock_timer.c
 SRC+=bar_player.c
 SRC+=btn_manager.c
@@ -61,18 +59,6 @@ SRC+=main_manager.c
 SRC+=lcd_5110_imp.c
 SRC+=lcd_5110_fonts.c
 SRC+=lcd_main_page.c
-
-# FatFS Files
-# SRC+=diskio.c
-# SRC+=ff.c
-# SRC+=ff_spi.c
-# SRC+=syscall.c
-# SRC+=unicode.c
-# SRC+=cc932.c
-# SRC+=cc936.c
-# SRC+=cc949.c
-# SRC+=cc950.c
-# SRC+=ccsbcs.c
 
 # FreeRTOS Source Files 
 # Uncomment to enable

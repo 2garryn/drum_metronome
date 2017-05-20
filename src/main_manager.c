@@ -17,7 +17,6 @@ void main_mgr_init() {
     lcd_set_bpm(current_bpm);
     lcd_set_note(current_note);
     lcd_set_track(current_track);
-//    fsm_open_sample("frank", &sample);
     btn_callback_set_mode_next_key(MULTICLICK_MODE);
     btn_callback_set_mode_prev_key(MULTICLICK_MODE);
     btn_callback_set_mode_start_stop_key(SIMPLE_MODE);
@@ -76,7 +75,6 @@ void main_mgr_select_note_key(uint8_t event) {
                 current_note = QUARTER_NOTE;
                 break;
         }
-        LOGD("Current note: ", current_note);
         lcd_set_note(current_note);
     }
     if(event == KEY_UP_CLICK) {

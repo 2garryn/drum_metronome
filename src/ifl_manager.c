@@ -16,7 +16,6 @@ uint8_t ifl_samples_count() {
 
 void ifl_id2name(uint8_t id, char * buffer) {
     uint32_t name_offset = INTERNAL_DATA_OFFSET + sizeof(uint8_t) + ((sizeof(char) * 9) * id);
-  //  buffer[8] = '\0';
     memcpy(buffer, (uint8_t *)name_offset, 9);
     buffer[8] = '\0';
 }

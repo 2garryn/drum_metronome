@@ -4,11 +4,6 @@
 #include <stm32f4xx.h>
 #include "uart_manager.h"
 #include "ifl_manager.h"
-/*
-
-void test_dac_manager1(void);
-void test_dac_manager(void);
-*/
 
 void dac_init(void);
 void dac_enable(void);
