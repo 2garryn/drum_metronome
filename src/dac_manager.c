@@ -79,7 +79,7 @@ uint8_t current_sample_id;
 uint8_t current_volume;
 
 void dac_play_sample(uint8_t id, uint8_t beat, uint8_t volume) {
-   // LOGD("dac_play_sample1", beat);
+    LOGD("dac_play_sample1", beat);
     TIM_Cmd(TIM6, DISABLE);
     loop_go = FALSE;
     DMA_Cmd(DMA1_Stream5, DISABLE);

@@ -204,8 +204,8 @@ void TIM3_IRQHandler(void) {
 }
 
 
-GPIO_TypeDef* volatile current_port;
-volatile uint16_t current_pin;
+static GPIO_TypeDef* volatile current_port;
+static volatile uint16_t current_pin;
 volatile uint8_t current_mode;
 volatile uint8_t is_button_processing;
 
