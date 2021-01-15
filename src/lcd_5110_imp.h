@@ -2,6 +2,7 @@
 #define LCD5110IMPLEMENTATION_H_INCLUDED
 
 #include "systick_manager.h"
+#include "common.h"
 
 #define RCC_GPIO RCC_AHB1Periph_GPIOE
 

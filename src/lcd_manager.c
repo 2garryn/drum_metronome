@@ -31,3 +31,8 @@ void lcd_set_note(uint8_t note) {
     }
 }
 
+void lcd_set_track(uint8_t track) {
+    if(current_page == MAIN_PAGE) {
+        lcd_main_page_set_track(track);
+    } 
+}

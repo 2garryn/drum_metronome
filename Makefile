@@ -10,7 +10,7 @@ OPTLVL:=0
 DBG:=-g
 
 FREERTOS:=$(CURDIR)/FreeRTOS
-FATFS:=$(CURDIR)/FatFS
+# FATFS:=$(CURDIR)/FatFS
 STARTUP:=$(CURDIR)/hardware
 LINKER_SCRIPT:=$(CURDIR)/Utilities/stm32_flash.ld
 
@@ -21,8 +21,8 @@ INCLUDE+=-I$(CURDIR)/Libraries/CMSIS/Device/ST/STM32F4xx/Include
 INCLUDE+=-I$(CURDIR)/Libraries/CMSIS/Include
 INCLUDE+=-I$(CURDIR)/Libraries/STM32F4xx_StdPeriph_Driver/inc
 INCLUDE+=-I$(CURDIR)/config
-INCLUDE+=-I$(FATFS)
-INCLUDE+=-I$(FATFS)/option
+# INCLUDE+=-I$(FATFS)
+# INCLUDE+=-I$(FATFS)/option
 INCLUDE+=-I$(CURDIR)/src
 
 BUILD_DIR = $(CURDIR)/build
@@ -31,8 +31,6 @@ BIN_DIR = $(CURDIR)/binary
 # vpath is used so object files are written to the current directory instead
 # of the same directory as their source files
 vpath %.c $(CURDIR)/Libraries/STM32F4xx_StdPeriph_Driver/src \
-          $(FATFS) \
-		  $(FATFS)/option \
           $(CURDIR)/Libraries/syscall \
 		  $(CURDIR)/hardware \
 		  $(CURDIR)/src \
@@ -48,9 +46,9 @@ SRC+=system_stm32f4xx.c
 SRC+=syscalls.c
 
 SRC+=main.c
-SRC+=fs_manager.c
 SRC+=uart_manager.c
 SRC+=dac_manager.c
+SRC+=ifl_manager.c
 SRC+=clock_timer.c
 SRC+=bar_player.c
 SRC+=btn_manager.c
@@ -61,18 +59,6 @@ SRC+=main_manager.c
 SRC+=lcd_5110_imp.c
 SRC+=lcd_5110_fonts.c
 SRC+=lcd_main_page.c
-
-# FatFS Files
-SRC+=diskio.c
-SRC+=ff.c
-SRC+=ff_spi.c
-SRC+=syscall.c
-SRC+=unicode.c
-# SRC+=cc932.c
-# SRC+=cc936.c
-# SRC+=cc949.c
-# SRC+=cc950.c
-# SRC+=ccsbcs.c
 
 # FreeRTOS Source Files 
 # Uncomment to enable
@@ -180,3 +166,6 @@ clean:
 
 flash:
 	@st-flash write $(BIN_DIR)/$(TARGET).bin 0x8000000
+
+write_samples:
+	@st-flash write samples/samples.bin 0x08040000

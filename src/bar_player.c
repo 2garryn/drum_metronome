@@ -1,79 +1,104 @@
 #include "bar_player.h"
 
-#define TRACK_LENGTH 9
+static uint16_t n_notes_counter;
+static uint8_t given_track;
+static uint8_t current_track_counter;
+static uint8_t given_pattern;
+static uint8_t current_pattern;
+static uint8_t current_sample_id;
 
-uint8_t next_track_position;
-uint8_t * track_array;
-fsm_sample * current_sample;
+static uint16_t calculate_interval(uint16_t bpm, uint8_t note_pattern);
+static void play_sample();
+static uint8_t is_play_subnote();
+static uint8_t get_offbeat_volume();
+static uint8_t get_downbeat_volume();
+static uint8_t get_subnote_volume();
 
-uint8_t bpl_start_sample(fsm_sample * sample,  uint16_t bpm, uint8_t * track) {
-    uint16_t bpm_interval = (uint16_t) lroundf(60000.0f / bpm);
-    next_track_position = 0;
-    current_sample = sample;
-    track_array = track;
-    LOGD("Bpm is set", bpm_interval);
-    dac_enable();
-    dac_load_file(&(sample->downbeat_fil));
+
+
+/*
+bpm: tempo,
+track: track number: 1 - 9,
+note_pattern: actual note
+*/
+uint8_t bpl_start_sample(uint8_t sample_id,  uint16_t bpm, uint8_t track, uint8_t note_pattern, uint16_t n_notes) {
+    uint16_t bpm_interval = calculate_interval(bpm, note_pattern);
+    LOGD("Given BPM: ", bpm);
+    LOGD("Current bpm interval: ", bpm_interval);
+    n_notes_counter = n_notes;
+    current_track_counter = 0;
+    given_track = track;
+    given_pattern = note_pattern;
+    current_pattern = 1;
+    current_sample_id = sample_id;
     clt_ms_trigger_clear();
     clt_ms_trigger_interval_set(bpm_interval);
     clt_tim_enable();
     return RET_OK;
 }
 
-uint8_t bpl_track_length() {
-    return TRACK_LENGTH;
-}
 
-
-void bpl_stop_sample(void) {
-    next_track_position = 0;
-    track_array = 0;
+void bpl_stop_sample() {
     clt_tim_disable();
+    clt_ms_trigger_clear();
 }
-uint8_t dac_result = RET_OK;
+
+uint16_t calculate_interval(uint16_t bpm, uint8_t note_pattern) {
+    if(note_pattern & SiXTEENTH__) {
+        return (uint16_t) lroundf(60000.0f / (bpm * 4));
+    } else if(note_pattern & EIGHTH__) {
+        return (uint16_t) lroundf(60000.0f / (bpm * 2));
+    } else if(note_pattern & QUARTER__) {
+        return (uint16_t) lroundf(60000.0f / bpm);
+    }
+    return 60000.0f / 60;
+}
 
 void bpl_loop(void) {
     if(clt_ms_trigger_is_set()) {
         clt_ms_trigger_clear();
-        dac_timer_enable();
-    }
-    dac_result = dac_loop();
-    if(dac_result == RET_ERROR || dac_result == RET_FILE_FINISHED ) {
-        dac_timer_disable();
-      //  dac_file_reset();
-        load_next_file();
-    }
+        play_sample();
+    };
+    dac_loop();
 }
 
-void load_next_file() {
-    uint8_t current_position = next_track_position;
-    set_next_track_position();
-    load_next_file_do(*(track_array + next_track_position));
-    return;
-}
-
-void load_next_file_do(uint8_t beat) {
-    switch (beat) {
-        case DOWNBEAT:
-            dac_load_file(&(current_sample->downbeat_fil));
-            break;
-        case OFFBEAT:
-            dac_load_file(&(current_sample->offbeat_fil));
-            break;  
-        default:
-            break;
+void play_sample() {
+    if(!is_play_subnote()) {
+        if(given_track == 0) {
+            dac_play_sample(current_sample_id, DOWNBEAT, get_downbeat_volume());
+        } else if(given_track == 1) {
+            dac_play_sample(current_sample_id, OFFBEAT, get_offbeat_volume());
+        } else if(current_track_counter == 0) {
+            dac_play_sample(current_sample_id, DOWNBEAT, get_downbeat_volume());
+            current_track_counter = given_track - 1;
+        } else {
+            dac_play_sample(current_sample_id, OFFBEAT, get_offbeat_volume());
+            current_track_counter--;
+        }
     }
 }
 
-void set_next_track_position() {
-    next_track_position++;
-    if(next_track_position == TRACK_LENGTH) {
-        next_track_position = 0;
-        return;
-    } 
-    if(*(track_array + next_track_position) == NOTHING) {
-        next_track_position = 0;
-        return;
-    }
-}
+uint8_t is_play_subnote() {
+    if(current_pattern == 1) {
+        current_pattern = given_pattern;
+        return FALSE;
+    };
 
+    if(current_pattern & 1) {
+        dac_play_sample(current_sample_id, OFFBEAT, get_subnote_volume());
+    };
+    current_pattern = current_pattern >> 1;
+    return TRUE;
+};
+
+uint8_t get_offbeat_volume() {
+    return 5;
+};
+
+uint8_t get_downbeat_volume() {
+    return 5;
+};
+
+uint8_t get_subnote_volume() {
+    return 3;
+};

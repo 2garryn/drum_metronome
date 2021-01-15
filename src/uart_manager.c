@@ -1,5 +1,7 @@
 #include "uart_manager.h"
 
+static void UART_puts(USART_TypeDef* USARTx, volatile char *s);
+static void LOG(char * log_level, char * text, uint16_t code);
 
 void init_UART(){
     uint32_t baudrate = 115200;

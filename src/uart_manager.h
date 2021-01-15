@@ -7,8 +7,6 @@ void init_UART();
 
 void print_UART(char * s);
 
-//void UART_puts(USART_TypeDef* USARTx, volatile char *s);
-
 void LOGD(char * text, uint16_t code);
 void LOGE(char * text, uint16_t code);
 void LOGI(char * text, uint16_t code);

@@ -45,7 +45,6 @@ void clt_ms_trigger_interval_set(uint16_t ms) {
 }
 
 uint8_t clt_ms_trigger_is_set(void) {
- //   LOGI("Checking ms trigger", clt_ms_counter);ьшm
     return clt_ms_counter_flag;
 }
 

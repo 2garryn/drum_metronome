@@ -1,4 +1,5 @@
 #include "lcd_5110_fonts.h"
+#include "common.h"
 // FONT: x(width): 12
 //       y(height): 24
 static uint8_t bpm_main_font[][36] = {
@@ -188,7 +189,19 @@ uint8_t get_bpm_main_font(uint8_t num, uint8_t i) {
 }
 
 uint8_t get_rhytm_note_font(uint8_t rhytm_note, uint8_t i) {
-    return rhytm_note_font[rhytm_note][i];
+    uint8_t rhytm_note_position;
+    switch (rhytm_note) {
+        case QUARTER_NOTE:
+            rhytm_note_position = 0;
+            break;
+        case EIGHTH_NOTE:
+            rhytm_note_position = 1;
+            break;
+        case SiXTEENTH_NOTE:
+            rhytm_note_position = 2;
+            break;
+    };
+    return rhytm_note_font[rhytm_note_position][i];
 }
 
 uint8_t get_simple_font(uint8_t ch, uint8_t line) {

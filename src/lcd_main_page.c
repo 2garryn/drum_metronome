@@ -18,6 +18,7 @@ void lcd_main_page_init() {
     render_bpm_num(00, 0xB8);
     render_bpm_num(00, 0xC6);
     render_string(0x80, 0x40, "RHM BT");
+    lcd_main_page_set_track(10);
 }
 
 
@@ -53,6 +54,15 @@ void lcd_main_page_set_note(uint8_t note) {
             i++;
         }
     }  
+}
+
+void lcd_main_page_set_track(uint8_t track) {
+    write_command(0x42);
+    write_command(0x98);
+    track = track + 16;
+    for (uint8_t line = 0; line < 6; line++) {
+		write_data(get_simple_font(track, line));
+	}
 }
 
 static void render_bpm_num(uint8_t num, uint8_t position) {

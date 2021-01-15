@@ -26,11 +26,11 @@ void lcd_implementation_init() {
 }
 
 static void init_display() {
-	lcd_led(RESET);
-	lcd_rst(RESET);
+	lcd_led(RESET_STATE);
+	lcd_rst(RESET_STATE);
 
 	systick_delay(10);
-	lcd_rst(SET);
+	lcd_rst(SET_STATE);
 	write_command(0x21); //Extended instruction set selected
 	write_command(0xC0); //Set LCD voltage // 0xB7 from code
     write_command(0x06); //Set temperature control (TC2)
@@ -54,20 +54,20 @@ void write_data(uint8_t data) {
 static void write_to_display(uint8_t data, uint8_t mode) {
 	uint8_t i;
 
-	lcd_cs(RESET);
+	lcd_cs(RESET_STATE);
 	if(mode == COMMAND) {
-		lcd_dc(RESET);
+		lcd_dc(RESET_STATE);
 	} else {
-		lcd_dc(SET);
+		lcd_dc(SET_STATE);
 	}
 	// SPI emulation magic
 	for (i = 0; i < 8; i++) {
-		lcd_din(data & 0x80 ? SET : RESET);
+		lcd_din(data & 0x80 ? SET_STATE : RESET_STATE);
 		data = data << 1;
-		lcd_sck(RESET);
-		lcd_sck(SET);
+		lcd_sck(RESET_STATE);
+		lcd_sck(SET_STATE);
 	}
-	lcd_cs(SET);
+	lcd_cs(SET_STATE);
 }
 
 
@@ -99,7 +99,7 @@ static void lcd_led(uint8_t state) {
 	lcd_bit(LED_PIN, state);
 }
 static void lcd_bit(uint16_t pin, uint8_t state) {
-	if(state == SET) {
+	if(state == SET_STATE) {
 		GPIO_SetBits(GPIO_PORT, pin);
 	} else {
 		GPIO_ResetBits(GPIO_PORT, pin);
